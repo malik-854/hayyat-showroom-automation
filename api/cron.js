@@ -19,7 +19,7 @@ export default async function handler(request, response) {
     const auth = new google.auth.GoogleAuth({
       credentials: { 
         client_email: clientEmail, 
-        private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/"/g, '').replace(/\\n/g, '\n') 
+        private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/"/g, '').replace(/\\n/g, '\n').replace(/\r/g, '').trim()
       },
       scopes: [
         'https://www.googleapis.com/auth/drive.readonly',
@@ -48,7 +48,7 @@ export default async function handler(request, response) {
       admin.initializeApp({
         credential: admin.credential.cert({ 
           clientEmail, 
-          privateKey: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/"/g, '').replace(/\\n/g, '\n') 
+          privateKey: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/"/g, '').replace(/\\n/g, '\n').replace(/\r/g, '').trim()
         }),
         storageBucket: process.env.FIREBASE_STORAGE_BUCKET
       });
