@@ -2,8 +2,10 @@ import { google } from 'googleapis';
 import admin from 'firebase-admin';
 
 export default async function handler(request, response) {
-  // Security check for Vercel Cron
-  if (request.headers.authorization !== `Bearer ${process.env.CRON_SECRET}` && process.env.VERCEL_ENV === 'production') {
+  const isValidAuthHeader = request.headers.authorization === `Bearer ${process.env.CRON_SECRET}`;
+  const isValidQuerySecret = request.query.secret === process.env.CRON_SECRET;
+
+  if (!isValidAuthHeader && !isValidQuerySecret && process.env.VERCEL_ENV === 'production') {
     return response.status(401).json({ error: 'Unauthorized CRON trigger' });
   }
 
