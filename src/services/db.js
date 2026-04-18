@@ -1,0 +1,22 @@
+export const fetchProducts = async () => new Promise(r => r([
+  {
+    "id": "SKEL-2026-001",
+    "category": "Living Room / Armchair",
+    "rawImage": "/assets/skeleton.jpeg",
+    "styleNames": ["Walnut / Cream", "Oak / Forest Green", "Black / Tan"],
+    "finishedImage": "https://storage.googleapis.com/hayyatfurniture.firebasestorage.app/renders/regal-chair-walnut-cream.png?GoogleAccessId=antigravity-worker%40hayyat-store-automation.iam.gserviceaccount.com&Expires=16446999600&Signature=YlLx%2ByztG%2BnrTFjS1UosnmsTKJ0GMmhg9FQG0lMCbZQxN4C0beNTMHa3zG43wqdRKiIxJ1DDUJ1VeqCr0MdNZZ%2FeTjLuM0hfwcjPU2KDpMrCyyoQ6tPobO4HDFTO%2FBa09%2BUPZhxrJNRbTB1mwzCuai0YGW7bRoMDmvRP%2FBc%2Fb5ceSOnWA9SJS4MAA3%2BhtlKPYr8QJu8K0xRgzl6huEpH3dCwlfG8HsQstIggLmREpl1DvcV3aStzNir2cd1D7mSOr5lMo%2BUlmeuYNarXsneT5PMabuzkcBkfnZKr%2Fla2sL1j77jKlRNgHfyHKupz9uHviONMPF%2BWxoYzu2C%2FV2VsUw%3D%3D,https://storage.googleapis.com/hayyatfurniture.firebasestorage.app/renders/regal-chair-oak-forest.png?GoogleAccessId=antigravity-worker%40hayyat-store-automation.iam.gserviceaccount.com&Expires=16446999600&Signature=qAv0y00cGhd7TW57vHEdsLu91A%2BjkFpJ9AK8lCzARLxeMOCJ9gSCxSyf8PjEeXgRBZ1ANdQxZRxRNl5SkTOJl98L%2FFck9XGtq8JvP9RYQjrSunsHGJrWaRHKi6czcuF6IgQTe7S0B4MLiOtnB4Jn7mJZNvyxPkVhn2UkjwPWYwUACo9tp9uOfanMuO7YVuplruVyk5FydDk%2FVx1XCMidYg%2BNwTz0ypwTmwZKTO12uZaXqiZEMXkOXMyrlg1nN2iwdE%2BrgUO3D0nAISpSwgsmHML96ym6XpKTg8Ygnbu6gjDzBK2AwuaGMbJzr9Xjj6Y%2BBS6dwjOIaoaXo4G67ZaSSw%3D%3D,https://storage.googleapis.com/hayyatfurniture.firebasestorage.app/renders/regal-chair-black-tan.png?GoogleAccessId=antigravity-worker%40hayyat-store-automation.iam.gserviceaccount.com&Expires=16446999600&Signature=BJ%2Bf%2F7zjTt%2Fvi6ZphkZSbPUSvUIoh79TEIZS4CtN8ulyL3QYkmqmbFoGtHn3RdAeE2tchW83F9MtR7I1suzPldTx769FiYjKfF2ORjoEhuHx0rUaFa38t1TGjR%2FSlmS1HfgR3zQbNOVlDNRQBND%2BqlnxNr0SAHn7PZSQV0djxfZZtNsg3VNBCBszxmONiaAnv8Z0ilDr%2B0O8d%2BPobYO06AgfD9vkXp%2BLKPD3z3m%2BXkOV2%2F3vfz1zca9qdiAWh86Rt9si6vN%2FSGeYozABt3qjdx6pIIQKJ223%2BGHlX2i8TthaZEsaQg%2Fl5dOM%2BCe0OOpEJIpBppYCNdfaICsHWxuz%2BQ%3D%3D",
+    "name": "The Regal Walnut & Cream Armchair",
+    "description": "Exquisitely crafted from premium walnut wood and finished with supple cream leather, this armchair embodies the pinnacle of luxury and comfort for the modern home.",
+    "price": "45,000 PKR"
+  },
+  {
+    "id": "SKEL-2026-002",
+    "category": "Living Room / Armchair",
+    "rawImage": "/assets/chair_skeleton.jpeg",
+    "styleNames": ["Royal Antique", "Modern Heritage", "Midnight Noir"],
+    "finishedImage": "https://storage.googleapis.com/hayyatfurniture.firebasestorage.app/renders/chair-royal-antique.png?GoogleAccessId=antigravity-worker%40hayyat-store-automation.iam.gserviceaccount.com&Expires=16446999600&Signature=wE%2Filn6SXQfOPsUj5YrhjC%2B3R3RAiPXDQEniq%2F4WmoW5x%2FONWL5FfVGoHc24s2xlGomrfs4%2F%2B6SROmKKCW6q3IE3EIgMxDEJN%2BpU5gl9InSY%2FV4%2FmGyU48Gu16hbt4ZhJyMTnH3i7XWFw8pehNQJKMNISLR2IntesthVsU95t8MSQux1%2BbmJzMIPo3Kust%2F9CjMT2xr1D%2FJBEC%2FzGzy8Qb32vXO9Vm1EHpFu%2BVAQsVyhqtn%2FwtsP370D9eFdRtHHETj7YM8Q%2Bqtu%2FH%2BxvxjP6eFkvyqxa7ZR9t8PUh3%2BtE2mjf8ygJf9ja9LDZay%2FP%2FdYK6x%2FSLWPjMQLSfMTGOfzg%3D%3D,https://storage.googleapis.com/hayyatfurniture.firebasestorage.app/renders/chair-modern-heritage.png?GoogleAccessId=antigravity-worker%40hayyat-store-automation.iam.gserviceaccount.com&Expires=16446999600&Signature=sGad0aRUWPNLZ0cUMaCVj%2FforDqehwiF%2BTgKgjMjWw19gW%2BeoS2Jq2Y9OFexMcf0hh6FjQ%2FrG3NrzrZ%2FRKtW8Vll1JkOsdSGRJTPIpWUlmylDCaItNodeMA92if2x9RyPQfuXPQraeNTWfr6YwBlxrUm3zmGw9HCtCswVvZfQfYyTfGhyZVHr%2BjuSSZHF528Ma9%2F%2BDzx6%2FPnqhWRC%2BrdmObzUpGQInzI9tiL9OIxNBfxlyRaq6ep4m5eVNMKlZgyCd2rV%2FG1QtwerrOdYcOGoaksghOifCHwXLk920ANp7JKIb1FrmbZOmHzgJYetb3oiuymoF2xrS%2FWXRv3FQWl5w%3D%3D,https://storage.googleapis.com/hayyatfurniture.firebasestorage.app/renders/chair-midnight-noir.png?GoogleAccessId=antigravity-worker%40hayyat-store-automation.iam.gserviceaccount.com&Expires=16446999600&Signature=cUDpkV0jbrGg4RjXl4vN2Ca4ijLxWwSaYuODtzepipAoM5tZhdxXHuH7%2F0YLyACxnfM%2Bik0RGvUNp5Txtlinj0VdQMF104nkMvme%2FL%2B%2B%2FuXBqfhK9OdOW%2FoasfLsFQNO7gbPw%2FS6uWQ1AiemlEyxz47QSRNvgh7htrD%2FiHaERPAjw6p0YtplqasVXAETG7eOf9xTbnNmxvODwXAjKWn7CyiJhCw2vpQG%2FNBOIwmiRtb7XeK49vv5jJDQ7%2Bd4IYWZ7RyNgzj4UsfkPdbnWIAu5IJ8Vbo6ZiFeT%2BQlkK10IB0wa%2FMCkPYzLk8AkifnSk7ii8W8wPgtpsn6arSY%2FJSxLg%3D%3D",
+    "name": "The Orchestrated Scroll Armchair",
+    "description": "A masterpiece of artisanal carving, this chair is reimagined in three distinct luxury finishes: Royal Antique, Modern Heritage, and Midnight Noir.",
+    "price": "65,000 PKR"
+  }
+]));

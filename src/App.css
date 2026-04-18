@@ -1,0 +1,366 @@
+/* Global Root Theme Fixes */
+:root {
+  --bg-dark: #0f0f12; /* Deep modern charcoal */
+  --gold: #d4af37;
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+.app-container {
+  position: relative;
+  min-height: 100vh;
+  background-color: var(--bg-dark);
+  color: white;
+  overflow-x: hidden;
+}
+
+/* Spotlight Background */
+.spotlight-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.spotlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, rgba(212, 175, 55, 0) 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Main Content Wrapper */
+.main-content {
+  position: relative;
+  z-index: 10;
+}
+
+/* Glassmorphic Navbar */
+.glass-navbar {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) !important; 
+  /* Note: Framer motion handles Y, but we need horizontal center */
+  width: calc(100% - 4rem);
+  max-width: 1200px;
+  z-index: 1000;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.navbar-container {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: white;
+  cursor: pointer;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.nav-link {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #a0a0a5;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: white;
+}
+
+/* Home Page Specifics */
+.home-page {
+  position: relative;
+  z-index: 10;
+}
+
+/* Luxury Hero */
+.luxury-hero {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute;
+  top: -10%;
+  left: 0;
+  width: 100%;
+  height: 120%; /* Extra height for parallax */
+  background-size: cover;
+  background-position: center;
+  z-index: -2;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(15, 15, 18, 0.4) 0%, rgba(15, 15, 18, 1) 100%);
+  z-index: -1;
+}
+
+.hero-content {
+  text-align: center;
+  max-width: 900px;
+  padding: 0 2rem;
+  margin-top: 10vh; /* Push down past navbar visually */
+}
+
+.hero-title-reveal {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 0%, #d4af37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 2rem;
+}
+
+.hero-subtitle {
+  font-size: 1rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #a0a0a5;
+}
+
+/* Showroom Section */
+.showroom-section {
+  padding: 8rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: white;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.section-line {
+  height: 1px;
+  background: var(--glass-border);
+  flex-grow: 1;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 3rem;
+}
+
+/* Tilt Card */
+.tilt-card {
+  perspective: 1000px; /* Essential for 3D effect internally if not applied on wrapper */
+  cursor: pointer;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.4s ease;
+}
+
+.tilt-card:hover {
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+.tilt-card-image {
+  width: 100%;
+  aspect-ratio: 1/1;
+  background: #1a1a1f;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tilt-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.tilt-card:hover .tilt-card-image img {
+  transform: scale(1.05);
+}
+
+.tilt-card-content {
+  text-align: left;
+}
+
+.tilt-card-category {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.tilt-card-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.tilt-card-price {
+  font-size: 1.1rem;
+  color: #a0a0a5;
+  font-weight: 400;
+}
+
+/* Story Page Styles */
+.story-container {
+  padding: 8rem 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.story-title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  margin-bottom: 4rem;
+  font-weight: 700;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  margin-bottom: 6rem;
+  text-align: left;
+}
+
+.story-text h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: var(--gold);
+}
+
+.story-text p {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: #a0a0a5;
+}
+
+.story-image-placeholder {
+  height: 400px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a0a0a5;
+  font-style: italic;
+}
+
+.story-philosophy {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.story-philosophy h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Contact Page Styles */
+.contact-container {
+  padding: 8rem 2rem;
+  text-align: center;
+}
+
+.contact-title {
+  font-size: 3rem;
+  margin-bottom: 4rem;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 0 auto 4rem;
+}
+
+.contact-card {
+  padding: 3rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+}
+
+.contact-card h3 {
+  color: var(--gold);
+  margin-bottom: 1.5rem;
+}
+
+.contact-card p {
+  color: #a0a0a5;
+  margin-bottom: 0.5rem;
+}
+
+.contact-info {
+  margin-top: 1rem;
+  font-weight: 600;
+  color: white !important;
+}
+
+.contact-footer {
+  margin-top: 2rem;
+}
