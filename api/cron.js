@@ -14,11 +14,13 @@ export default async function handler(request, response) {
 
     // 1. Initialize Google Auth from Environment Variables (Not local JSON)
     // Note: On Vercel, store your Private Key with \n characters properly escaped.
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
     const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
 
     const auth = new google.auth.GoogleAuth({
-      credentials: { client_email: clientEmail, private_key: privateKey },
+      credentials: { 
+        client_email: clientEmail, 
+        private_key: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/"/g, '').replace(/\\n/g, '\n') 
+      },
       scopes: [
         'https://www.googleapis.com/auth/drive.readonly',
         'https://www.googleapis.com/auth/spreadsheets'
@@ -44,7 +46,10 @@ export default async function handler(request, response) {
     // 3. Initialize Firebase (Check prevents crash on Vercel warm-starts)
     if (!admin.apps.length) {
       admin.initializeApp({
-        credential: admin.credential.cert({ clientEmail, privateKey }),
+        credential: admin.credential.cert({ 
+          clientEmail, 
+          privateKey: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/"/g, '').replace(/\\n/g, '\n') 
+        }),
         storageBucket: process.env.FIREBASE_STORAGE_BUCKET
       });
     }
