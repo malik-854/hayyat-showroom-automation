@@ -46,7 +46,8 @@ export default async function handler(request, response) {
     // 3. Initialize Firebase (Check prevents crash on Vercel warm-starts)
     if (!admin.apps.length) {
       admin.initializeApp({
-        credential: admin.credential.cert({ 
+        credential: admin.credential.cert({
+          projectId: process.env.GOOGLE_PROJECT_ID,
           clientEmail, 
           privateKey: (process.env.GOOGLE_PRIVATE_KEY || '').replace(/"/g, '').replace(/\\n/g, '\n').replace(/\r/g, '').trim()
         }),
