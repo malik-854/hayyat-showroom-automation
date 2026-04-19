@@ -25,7 +25,8 @@ export default async function handler(request, response) {
       credentials: { client_email: clientEmail, private_key: privateKey },
       scopes: [
         'https://www.googleapis.com/auth/drive.readonly',
-        'https://www.googleapis.com/auth/spreadsheets'
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/cloud-platform'
       ],
     });
 
