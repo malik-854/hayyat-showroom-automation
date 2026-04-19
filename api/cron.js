@@ -43,25 +43,39 @@ export default async function handler(request, response) {
       const prefix = parts[0]; 
       
       if (!productsMap[prefix]) {
-        productsMap[prefix] = { id: prefix, name: prefix, skeleton: null, variants: [], grid: null };
+        productsMap[prefix] = { id: prefix, name: prefix, skeleton: null, variants: [], globalGrid: null };
       }
 
-      if (file.name.toLowerCase().includes('_skeleton')) {
+      const fileNameLower = file.name.toLowerCase();
+
+      if (fileNameLower.includes('_skeleton')) {
         productsMap[prefix].skeleton = file.webViewLink;
-      } else if (file.name.toLowerCase().includes('_ai')) {
-        const styleName = parts.slice(2).join(' ').split('.')[0]; 
-        productsMap[prefix].variants.push({
-          url: file.webViewLink,
-          style: styleName || 'Luxury Variant'
-        });
-      } else if (file.name.toLowerCase().includes('_grid')) {
-        // New: Detect the 4-angle grid image
-        productsMap[prefix].grid = file.webViewLink;
+      } else if (fileNameLower.includes('_ai')) {
+        // We handle two things for _ai files:
+        // 1. A render: "Walnut_Ai_Blue.jpg"
+        // 2. A variant-specific grid: "Walnut_Ai_Blue_grid.jpg"
+        
+        const isVariantGrid = fileNameLower.includes('_grid');
+        const styleName = parts.slice(2).join(' ').split('_grid')[0].split('.')[0].trim(); 
+
+        if (isVariantGrid) {
+            // Store variant grid temporarily to match later
+            if (!productsMap[prefix].variantGrids) productsMap[prefix].variantGrids = {};
+            productsMap[prefix].variantGrids[styleName] = file.webViewLink;
+        } else {
+            productsMap[prefix].variants.push({
+              url: file.webViewLink,
+              style: styleName || 'Luxury Variant'
+            });
+        }
+      } else if (fileNameLower.includes('_grid')) {
+        // This is a global grid: "Walnut_grid.jpg" (used for all variations if no specific one exists)
+        productsMap[prefix].globalGrid = file.webViewLink;
       }
     });
 
     // 4. SYNC TO GOOGLE SHEET
-    const productsToSync = Object.values(productsMap).filter(p => p.skeleton && (p.variants.length > 0 || p.grid));
+    const productsToSync = Object.values(productsMap).filter(p => p.skeleton && (p.variants.length > 0 || p.globalGrid));
     
     if (productsToSync.length === 0) {
       return response.status(200).json({ message: 'No complete sets found', processed: 0 });
@@ -77,6 +91,15 @@ export default async function handler(request, response) {
     const newRows = [];
     for (const prod of productsToSync) {
       if (!existingIds.includes(prod.id)) {
+        // Map each variant to its best matching grid
+        const assignedGrids = prod.variants.map(v => {
+            const variantGrid = prod.variantGrids && prod.variantGrids[v.style];
+            return variantGrid || prod.globalGrid || '';
+        });
+
+        // Special case: if no variants but has a global grid, we still want the grid link
+        const finalGridString = assignedGrids.length > 0 ? assignedGrids.join(',') : (prod.globalGrid || '');
+
         newRows.push([
           prod.id,
           prod.name.replace(/-/g, ' '), 
@@ -86,7 +109,7 @@ export default async function handler(request, response) {
           `High-end ${prod.name} with custom artisan variations.`,
           'Price TBD',
           'Live',
-          prod.grid || '' // Column I: The Multi-Angle Grid link
+          finalGridString // Column I: List of grids matching the variants in Col D
         ]);
       }
     }
