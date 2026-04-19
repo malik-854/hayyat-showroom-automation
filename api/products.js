@@ -26,18 +26,16 @@ export default async function handler(request, response) {
     }
 
     // 3. Map the raw Google Sheet rows into clean Website JSON
-    const products = rows.map((row) => {
-      const finishedImageRaw = row[3] || '';
-      const gridLink = row[8] || '';
-      
       // Fallback: If no AI renders exist (Col D), use the grid link (Col I) as the main image
       const finishedImage = finishedImageRaw || gridLink;
+      const isGridFallback = !finishedImageRaw && !!gridLink;
 
       return {
         id: row[0],
         name: row[1],
         rawImage: row[2],
         finishedImage: finishedImage, 
+        isGridFallback: isGridFallback,
         styleNames: row[4] ? row[4].split(',').map(s => s.trim()) : [],
         description: row[5],
         price: row[6],

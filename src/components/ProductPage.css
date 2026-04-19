@@ -54,12 +54,15 @@
 
 /* ── Main View Grid Cropping ── */
 .product-media-section:has(.is-grid-mode) .main-product-image {
-  /* Default state for grid image */
+  /* Default state for grid image or AI render: show full */
   object-fit: contain;
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
 
-.product-media-section:has(.is-grid-mode) .main-product-image:not(.is-raw) {
-    /* Focus logic when an angle is active */
+/* ONLY zoom if an angle thumbnail is active */
+.product-media-section:has(.angle-thumb.active) .main-product-image:not(.is-raw) {
     width: 200%;
     height: 200%;
     object-fit: cover;

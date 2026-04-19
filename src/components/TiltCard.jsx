@@ -51,7 +51,7 @@ const TiltCard = ({ product, onClick }) => {
     y.set(0);
   };
 
-  const isGridFallback = product.angleViews && product.angleViews.length === 1 && images.length === 1;
+  const isGridFallback = product.isGridFallback;
 
   return (
     <motion.div
