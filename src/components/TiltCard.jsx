@@ -51,9 +51,11 @@ const TiltCard = ({ product, onClick }) => {
     y.set(0);
   };
 
+  const isGridFallback = product.angleViews && product.angleViews.length === 1 && images.length === 1;
+
   return (
     <motion.div
-      className="tilt-card"
+      className={`tilt-card ${isGridFallback ? 'grid-fallback' : ''}`}
       style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -72,6 +74,7 @@ const TiltCard = ({ product, onClick }) => {
             key={currentImageIndex}
             src={images[currentImageIndex] || ''} 
             alt={product.name}
+            className={isGridFallback ? 'quadrant-0' : ''}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

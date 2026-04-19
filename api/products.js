@@ -26,18 +26,25 @@ export default async function handler(request, response) {
     }
 
     // 3. Map the raw Google Sheet rows into clean Website JSON
-    const products = rows.map((row) => ({
-      id: row[0],
-      name: row[1],
-      rawImage: row[2],
-      finishedImage: row[3], // Comma-separated list handled by TiltCard.jsx
-      styleNames: row[4] ? row[4].split(',').map(s => s.trim()) : [],
-      description: row[5],
-      price: row[6],
-      status: row[7],
-      // Col I: 4 angle-view URLs produced by the grid slicer (empty array if no grid uploaded yet)
-      angleViews: row[8] ? row[8].split(',').map(s => s.trim()).filter(Boolean) : [],
-    }));
+    const products = rows.map((row) => {
+      const finishedImageRaw = row[3] || '';
+      const gridLink = row[8] || '';
+      
+      // Fallback: If no AI renders exist (Col D), use the grid link (Col I) as the main image
+      const finishedImage = finishedImageRaw || gridLink;
+
+      return {
+        id: row[0],
+        name: row[1],
+        rawImage: row[2],
+        finishedImage: finishedImage, 
+        styleNames: row[4] ? row[4].split(',').map(s => s.trim()) : [],
+        description: row[5],
+        price: row[6],
+        status: row[7],
+        angleViews: gridLink ? gridLink.split(',').map(s => s.trim()).filter(Boolean) : [],
+      };
+    });
 
     // Cache the response for 60 seconds on Vercel's edge to keep it fast
     response.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
