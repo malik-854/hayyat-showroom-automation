@@ -54,38 +54,12 @@ const ProductPage = ({ product }) => {
     y.set(yPct);
   };
 
-  // Quadrant positions for the 2x2 grid image slicing
-  // Each entry tells the image where to sit inside the overflow:hidden container
-  const QUADRANT_STYLES = [
-    { top: '0%',     left: '0%'    }, // 0: Front      (top-left)
-    { top: '0%',     left: '-100%' }, // 1: Side →     (top-right)
-    { top: '-100%',  left: '0%'    }, // 2: Back       (bottom-left)
-    { top: '-100%',  left: '-100%' }, // 3: ← Side     (bottom-right)
-  ];
-
-  // Whether we are actively showing a cropped quadrant
-  const isAngleCropActive = !showCraftsmanshipMode && activeAngle !== null && angleViews.length > 0;
-
-  // Main image source: grid URL when angle active, AI render otherwise
+  // Priority: craftsmanship toggle > angle view > selected style render
   const currentImage = showCraftsmanshipMode
     ? rawImageProcessed
-    : isAngleCropActive
-      ? getDirectImageUrl(angleViews[0])
+    : activeAngle !== null && angleViews.length > 0
+      ? getDirectImageUrl(angleViews.length === 1 ? angleViews[0] : angleViews[activeAngle])
       : images[selectedStyleIndex];
-
-  // Inline style for the main image box when a quadrant is selected
-  const mainImageStyle = isAngleCropActive
-    ? {
-        width: '200%',
-        height: '200%',
-        objectFit: 'cover',
-        position: 'absolute',
-        maxWidth: 'none',
-        top: QUADRANT_STYLES[activeAngle].top,
-        left: QUADRANT_STYLES[activeAngle].left,
-        transition: 'top 0.4s ease, left 0.4s ease',
-      }
-    : { width: '100%', height: '100%', objectFit: 'contain', position: 'relative' };
 
   return (
     <div className="product-page-container">
@@ -99,13 +73,13 @@ const ProductPage = ({ product }) => {
             onMouseLeave={() => { x.set(0); y.set(0); }}
           >
             <motion.img 
-              key={`${currentImage}-${activeAngle}`}
+              key={currentImage}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               src={currentImage} 
               alt={product.name} 
               className={`main-product-image ${showCraftsmanshipMode ? 'is-raw' : 'is-finished'}`} 
-              style={mainImageStyle}
+              style={{ transform: "translateZ(50px)" }}
             />
           </motion.div>
 

@@ -52,6 +52,30 @@
   transition: opacity 0.4s ease-in-out;
 }
 
+/* ── Main View Grid Cropping ── */
+.product-media-section:has(.is-grid-mode) .main-product-image {
+  /* Default state for grid image or AI render: show full */
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* ONLY zoom if an angle thumbnail is active */
+.product-media-section:has(.angle-thumb.active) .main-product-image:not(.is-raw) {
+    width: 200%;
+    height: 200%;
+    object-fit: cover;
+    position: absolute;
+    max-width: none;
+}
+
+/* Position based on which thumbnail is active */
+.product-media-section:has(.quadrant-0.active) .main-product-image { top: 0; left: 0; }
+.product-media-section:has(.quadrant-1.active) .main-product-image { top: 0; left: -100%; }
+.product-media-section:has(.quadrant-2.active) .main-product-image { top: -100%; left: 0; }
+.product-media-section:has(.quadrant-3.active) .main-product-image { top: -100%; left: -100%; }
+
 .main-product-image.is-raw {
   opacity: 0.6;
   filter: grayscale(20%);
@@ -328,18 +352,18 @@
   transition: transform 0.3s ease;
 }
 
-/* ─── Grid Mode Slicing (Dynamic for thumbnails) ─── */
+/* ─── Grid Mode Slicing (CSS Only) ─── */
 .is-grid-mode .angle-thumb img {
-  width: 100%;
-  height: 100%;
-  transform: scale(2);
-  transition: transform 0.3s ease;
+  width: 200%;
+  height: 200%;
+  max-width: none;
+  position: absolute;
 }
 
-.is-grid-mode .quadrant-0 img { transform-origin: top left; }
-.is-grid-mode .quadrant-1 img { transform-origin: top right; }
-.is-grid-mode .quadrant-2 img { transform-origin: bottom left; }
-.is-grid-mode .quadrant-3 img { transform-origin: bottom right; }
+.is-grid-mode .quadrant-0 img { top: 0; left: 0; }
+.is-grid-mode .quadrant-1 img { top: 0; left: -100%; }
+.is-grid-mode .quadrant-2 img { top: -100%; left: 0; }
+.is-grid-mode .quadrant-3 img { top: -100%; left: -100%; }
 
 .angle-thumb span {
   font-size: 0.65rem;
