@@ -43,27 +43,28 @@ export default async function handler(request, response) {
       const prefix = parts[0]; 
       
       if (!productsMap[prefix]) {
-        productsMap[prefix] = { id: prefix, name: prefix, skeleton: null, variants: [] };
+        productsMap[prefix] = { id: prefix, name: prefix, skeleton: null, variants: [], grid: null };
       }
 
       if (file.name.toLowerCase().includes('_skeleton')) {
         productsMap[prefix].skeleton = file.webViewLink;
       } else if (file.name.toLowerCase().includes('_ai')) {
-        // Extract style name: Chair1_Ai1_Golden_Oak.jpg -> Golden Oak
-        // Logic: Get everything after the second underscore and before the extension
         const styleName = parts.slice(2).join(' ').split('.')[0]; 
         productsMap[prefix].variants.push({
           url: file.webViewLink,
           style: styleName || 'Luxury Variant'
         });
+      } else if (file.name.toLowerCase().includes('_grid')) {
+        // New: Detect the 4-angle grid image
+        productsMap[prefix].grid = file.webViewLink;
       }
     });
 
     // 4. SYNC TO GOOGLE SHEET
-    const productsToSync = Object.values(productsMap).filter(p => p.skeleton && p.variants.length > 0);
+    const productsToSync = Object.values(productsMap).filter(p => p.skeleton && (p.variants.length > 0 || p.grid));
     
     if (productsToSync.length === 0) {
-      return response.status(200).json({ message: 'No complete sets found (A set needs a _skeleton and at least one _Ai file)', processed: 0 });
+      return response.status(200).json({ message: 'No complete sets found', processed: 0 });
     }
 
     // Get current sheet data to prevent duplicates
@@ -78,13 +79,14 @@ export default async function handler(request, response) {
       if (!existingIds.includes(prod.id)) {
         newRows.push([
           prod.id,
-          prod.name.replace(/-/g, ' '), // Prettier name
+          prod.name.replace(/-/g, ' '), 
           prod.skeleton,
           prod.variants.map(v => v.url).join(','),
           prod.variants.map(v => v.style).join(','),
           `High-end ${prod.name} with custom artisan variations.`,
           'Price TBD',
-          'Live'
+          'Live',
+          prod.grid || '' // Column I: The Multi-Angle Grid link
         ]);
       }
     }
@@ -92,7 +94,7 @@ export default async function handler(request, response) {
     if (newRows.length > 0) {
       await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.CATALOG_SHEET_ID,
-        range: 'Sheet1!A:H',
+        range: 'Sheet1!A:I',
         valueInputOption: 'USER_ENTERED',
         resource: { values: newRows }
       });

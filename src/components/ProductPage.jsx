@@ -4,6 +4,8 @@ import './ProductPage.css';
 
 const ProductPage = ({ product }) => {
   const [showCraftsmanshipMode, setShowCraftsmanshipMode] = useState(false);
+  // Angle view: null means "show the finished render", a number = index into angleViews
+  const [activeAngle, setActiveAngle] = useState(null);
   
   const getDirectImageUrl = (url) => {
     if (!url) return '';
@@ -27,6 +29,10 @@ const ProductPage = ({ product }) => {
   // Styles labels mapping dynamically from the DB or falling back to defaults
   const styleLabels = product.styleNames || ['Walnut / Cream', 'Oak / Forest Green', 'Black / Tan'];
 
+  // angle-view URLs from column I of the Sheet
+  const angleViews = product.angleViews || [];
+  const angleLabels = ['Front', 'Side →', 'Back', '← Side'];
+
   // 3D Tilt Logic
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -45,7 +51,12 @@ const ProductPage = ({ product }) => {
     y.set(yPct);
   };
 
-  const currentImage = showCraftsmanshipMode ? rawImageProcessed : images[selectedStyleIndex];
+  // Priority: craftsmanship toggle > angle view > selected style render
+  const currentImage = showCraftsmanshipMode
+    ? rawImageProcessed
+    : activeAngle !== null && angleViews[activeAngle]
+      ? angleViews[activeAngle]
+      : images[selectedStyleIndex];
 
   return (
     <div className="product-page-container">
@@ -68,6 +79,31 @@ const ProductPage = ({ product }) => {
               style={{ transform: "translateZ(50px)" }}
             />
           </motion.div>
+
+          {/* ── Angle View Thumbnail Strip ── */}
+          {angleViews.length > 0 && (
+            <div className={`angle-strip ${angleViews.length === 1 ? 'is-grid-mode' : 'is-split-mode'}`}>
+              {(angleViews.length === 1 ? [0, 1, 2, 3] : angleViews).map((item, idx) => {
+                const url = angleViews.length === 1 ? angleViews[0] : item;
+                return (
+                  <button
+                    key={idx}
+                    className={`angle-thumb ${activeAngle === idx ? 'active' : ''} quadrant-${idx}`}
+                    onClick={() => {
+                      setActiveAngle(activeAngle === idx ? null : idx);
+                      setShowCraftsmanshipMode(false);
+                    }}
+                    title={angleLabels[idx]}
+                  >
+                    <div className="thumb-crop-box">
+                      <img src={getDirectImageUrl(url)} alt={angleLabels[idx]} />
+                    </div>
+                    <span>{angleLabels[idx]}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
           
           <div className="craftsmanship-toggle-wrapper">
             <span className={`toggle-label ${!showCraftsmanshipMode ? 'active' : ''}`}>Finished</span>
@@ -96,6 +132,7 @@ const ProductPage = ({ product }) => {
                   onClick={() => {
                     setSelectedStyleIndex(index);
                     setShowCraftsmanshipMode(false);
+                    setActiveAngle(null); // reset angle when switching style
                   }}
                 >
                   <div className={`color-dot style-${index}`} />

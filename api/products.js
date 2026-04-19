@@ -16,7 +16,7 @@ export default async function handler(request, response) {
     // 2. Fetch the catalog from your Sheet
     const sheetRes = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.CATALOG_SHEET_ID,
-      range: 'Sheet1!A2:H100', // Skip header, get the inventory
+      range: 'Sheet1!A2:I100', // Skip header; Col I = angle_views (4 URLs from grid slicer)
     });
 
     const rows = sheetRes.data.values;
@@ -35,6 +35,8 @@ export default async function handler(request, response) {
       description: row[5],
       price: row[6],
       status: row[7],
+      // Col I: 4 angle-view URLs produced by the grid slicer (empty array if no grid uploaded yet)
+      angleViews: row[8] ? row[8].split(',').map(s => s.trim()).filter(Boolean) : [],
     }));
 
     // Cache the response for 60 seconds on Vercel's edge to keep it fast

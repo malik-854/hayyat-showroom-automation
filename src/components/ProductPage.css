@@ -52,9 +52,37 @@
   transition: opacity 0.4s ease-in-out;
 }
 
+/* ── Main View Grid Cropping ── */
+.product-media-section:has(.is-grid-mode) .main-product-image {
+  /* Default state for grid image */
+  object-fit: contain;
+}
+
+.product-media-section:has(.is-grid-mode) .main-product-image:not(.is-raw) {
+    /* Focus logic when an angle is active */
+    width: 200%;
+    height: 200%;
+    object-fit: cover;
+    position: absolute;
+    max-width: none;
+}
+
+/* Position based on which thumbnail is active */
+.product-media-section:has(.quadrant-0.active) .main-product-image { top: 0; left: 0; }
+.product-media-section:has(.quadrant-1.active) .main-product-image { top: 0; left: -100%; }
+.product-media-section:has(.quadrant-2.active) .main-product-image { top: -100%; left: 0; }
+.product-media-section:has(.quadrant-3.active) .main-product-image { top: -100%; left: -100%; }
+
 .main-product-image.is-raw {
   opacity: 0.6;
   filter: grayscale(20%);
+  /* Ensure raw image is never cropped even if angle was selected */
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  object-fit: contain !important;
+  top: auto !important;
+  left: auto !important;
 }
 
 /* Custom Toggle Switch for Craftsmanship Mode */
@@ -281,3 +309,84 @@
   outline: 2px solid rgba(0,0,0,0.1);
   outline-offset: 2px;
 }
+
+/* ─── Angle View Thumbnail Strip ────────────────────────────────────────────── */
+.angle-strip {
+  display: flex;
+  gap: 0.6rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.angle-thumb {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.3rem 0.5rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.thumb-crop-box {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.angle-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+/* ─── Grid Mode Slicing (CSS Only) ─── */
+.is-grid-mode .angle-thumb img {
+  width: 200%;
+  height: 200%;
+  max-width: none;
+  position: absolute;
+}
+
+.is-grid-mode .quadrant-0 img { top: 0; left: 0; }
+.is-grid-mode .quadrant-1 img { top: 0; left: -100%; }
+.is-grid-mode .quadrant-2 img { top: -100%; left: 0; }
+.is-grid-mode .quadrant-3 img { top: -100%; left: -100%; }
+
+.angle-thumb span {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #86868b;
+  transition: color 0.25s ease;
+  white-space: nowrap;
+}
+
+.angle-thumb:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.angle-thumb:hover img {
+  transform: scale(1.06);
+}
+
+.angle-thumb.active {
+  border-color: var(--gold, #d4af37);
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.angle-thumb.active span {
+  color: var(--gold, #d4af37);
+}
+
