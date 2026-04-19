@@ -10,7 +10,7 @@ const ProductPage = ({ product }) => {
     if (typeof url !== 'string') return url;
     if (url.includes('drive.google.com')) {
       const idMatch = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
-      return idMatch ? `https://drive.google.com/uc?export=view&id=${idMatch[1]}` : url;
+      return idMatch ? `/api/image?id=${idMatch[1]}` : url;
     }
     return url;
   };
