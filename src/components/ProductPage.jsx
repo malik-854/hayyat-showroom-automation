@@ -54,8 +54,8 @@ const ProductPage = ({ product }) => {
   // Priority: craftsmanship toggle > angle view > selected style render
   const currentImage = showCraftsmanshipMode
     ? rawImageProcessed
-    : activeAngle !== null && angleViews[activeAngle]
-      ? angleViews[activeAngle]
+    : activeAngle !== null && angleViews.length > 0
+      ? getDirectImageUrl(angleViews.length === 1 ? angleViews[0] : angleViews[activeAngle])
       : images[selectedStyleIndex];
 
   return (
