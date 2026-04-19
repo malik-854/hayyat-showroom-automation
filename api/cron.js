@@ -76,8 +76,9 @@ export default async function handler(request, response) {
         
         console.log(`[Generated] Image variant: ${style}`);
         
-        // Example mock URL to simulate Firebase upload process
-        firebaseSignedUrls.push(`https://YOUR_FIREBASE_URL/renders/${skeleton.id}-${i}.png`);
+        // Example mock URL to simulate Firebase upload process using dynamic bucket env var
+        const fileName = `${skeleton.id}-${i}.png`;
+        firebaseSignedUrls.push(`https://firebasestorage.googleapis.com/v0/b/${process.env.FIREBASE_STORAGE_BUCKET}/o/renders%2F${fileName}?alt=media`);
       }
 
       // 5. Append to Google Sheets
