@@ -31,10 +31,10 @@ export default async function handler(request, response) {
 
     const drive = google.drive({ version: 'v3', auth });
 
-    // 2. Query Google Drive
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    // 2. Query Google Drive for anything in the last 24 hours
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const driveRes = await drive.files.list({
-      q: `'${process.env.SKELETON_FOLDER_ID}' in parents and modifiedTime > '${oneHourAgo}' and mimeType contains 'image/' and trashed = false`,
+      q: `'${process.env.SKELETON_FOLDER_ID}' in parents and modifiedTime > '${yesterday}' and trashed = false`,
       fields: 'files(id, name, mimeType)',
     });
 
