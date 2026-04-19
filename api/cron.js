@@ -86,12 +86,28 @@ export default async function handler(request, response) {
       console.log(`Generating Single Luxury Variant for: ${skeleton.name}`);
       
       try {
-        const predictionResponse = await generativeModel.predict({
-          instances: [{ prompt: stylePrompt }],
-          parameters: { sampleCount: 1 }
+        const endpoint = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/imagen-3.0-generate-002:predict`;
+        const accessToken = await auth.getAccessToken();
+
+        const predictionResponse = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            instances: [{ prompt: stylePrompt }],
+            parameters: { sampleCount: 1 }
+          })
         });
-        
-        const base64Str = predictionResponse.predictions[0].bytesBase64Encoded;
+
+        if (!predictionResponse.ok) {
+          const errData = await predictionResponse.json();
+          throw new Error(errData.error?.message || 'Prediction failed');
+        }
+
+        const data = await predictionResponse.json();
+        const base64Str = data.predictions[0].bytesBase64Encoded;
         const imageBuffer = Buffer.from(base64Str, 'base64');
         const fileRef = bucket.file(`renders/${fileName}`);
         await fileRef.save(imageBuffer, { metadata: { contentType: 'image/png' } });
