@@ -31,18 +31,18 @@ export default async function handler(request, response) {
 
     const drive = google.drive({ version: 'v3', auth });
 
-    // 2. Query Google Drive for anything in the last 24 hours
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    // 2. Query Google Drive - Simplified to ensure NO files are missed
     const driveRes = await drive.files.list({
-      q: `'${process.env.SKELETON_FOLDER_ID}' in parents and modifiedTime > '${yesterday}' and trashed = false`,
+      q: `'${process.env.SKELETON_FOLDER_ID}' in parents and trashed = false`,
       fields: 'files(id, name, mimeType)',
     });
 
-    const newFiles = driveRes.data.files;
+    const allFiles = driveRes.data.files;
+    const newFiles = allFiles.filter(f => f.mimeType.includes('image/'));
     
     if (!newFiles || newFiles.length === 0) {
-      console.log('No new files detected.');
-      return response.status(200).json({ message: 'Success', processed: 0 });
+      console.log('No images found in folder:', process.env.SKELETON_FOLDER_ID);
+      return response.status(200).json({ message: 'Success', processed: 0, scanned: allFiles.length });
     }
 
     // 3. Initialize Firebase
