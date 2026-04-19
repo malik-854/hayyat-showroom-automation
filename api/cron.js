@@ -76,6 +76,13 @@ export default async function handler(request, response) {
         const style = styles[i];
         const fileName = `${skeleton.id}-${i}.png`;
         
+        // Wait 20 seconds between generations if it's not the first one
+        // to stay under the Google Cloud "Requests per minute" quota.
+        if (i > 0) {
+          console.log('Waiting 20s to prevent Rate Limit (429)...');
+          await new Promise(resolve => setTimeout(resolve, 20000));
+        }
+        
         try {
           console.log(`Generating via Vertex Imagen: ${style}`);
           const result = await generativeModel.generateContent({
