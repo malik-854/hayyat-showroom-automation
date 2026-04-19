@@ -39,6 +39,7 @@ export default async function handler(request, response) {
 
     const allFiles = driveRes.data.files;
     const newFiles = allFiles.filter(f => f.mimeType.includes('image/'));
+    const textFiles = allFiles.filter(f => f.mimeType.includes('text/plain') || f.name.endsWith('.txt'));
     
     if (!newFiles || newFiles.length === 0) {
       console.log('No images found in folder:', process.env.SKELETON_FOLDER_ID);
@@ -67,51 +68,37 @@ export default async function handler(request, response) {
       model: 'imagen-3.0-generate-002',
     });
 
-    const styles = ['Walnut and Cream', 'Oak and Forest Green', 'Matte Black and Tan'];
-    
     for (const skeleton of newFiles) {
       const firebaseSignedUrls = [];
+      const fileName = `${skeleton.id}-variation.png`;
       
-      for (let i = 0; i < styles.length; i++) {
-        const style = styles[i];
-        const fileName = `${skeleton.id}-${i}.png`;
-        
-        // Wait 20 seconds between generations if it's not the first one
-        // to stay under the Google Cloud "Requests per minute" quota.
-        if (i > 0) {
-          console.log('Waiting 20s to prevent Rate Limit (429)...');
-          await new Promise(resolve => setTimeout(resolve, 20000));
-        }
-        
-        try {
-          console.log(`Generating via Vertex Imagen: ${style}`);
-          const result = await generativeModel.generateContent({
-            contents: [{
-              role: 'user',
-              parts: [{
-                text: `A high-end luxury furniture piece in the style of ${style}. Minimalist boutique furniture showroom with cinematic lighting, architectural digest style.`
-              }]
-            }]
-          });
-          
-          // Depending on the Vertex version, it might return the image differently.
-          // For Imagen 3.0, usually it's a prediction call, but generateContent often works for multi-modal.
-          // Let's use the prediction format to be safe for Imagen.
-          const predictionResponse = await generativeModel.predict({
-            instances: [{ prompt: `A high-end luxury furniture piece in the style of ${style}. Minimalist boutique furniture showroom with cinematic lighting.` }],
-            parameters: { sampleCount: 1 }
-          });
-          
-          const base64Str = predictionResponse.predictions[0].bytesBase64Encoded;
-          const imageBuffer = Buffer.from(base64Str, 'base64');
+      // A. Try to find custom instructions in a .txt file with similar name
+      let stylePrompt = "High-end luxury furniture with premium finishes and cinematic showroom lighting.";
+      const baseName = skeleton.name.split('.')[0];
+      const matchingTxt = textFiles.find(t => t.name.startsWith(baseName));
 
-          const fileRef = bucket.file(`renders/${fileName}`);
-          await fileRef.save(imageBuffer, { metadata: { contentType: 'image/png' } });
-          
-          firebaseSignedUrls.push(`https://firebasestorage.googleapis.com/v0/b/${process.env.FIREBASE_STORAGE_BUCKET}/o/renders%2F${fileName}?alt=media`);
-        } catch (genError) {
-          firebaseSignedUrls.push(`GENERATION_ERROR: ${genError.message.replace(/,/g, '_')}`);
-        }
+      if (matchingTxt) {
+        console.log(`Found custom instructions in ${matchingTxt.name}`);
+        const txtRes = await drive.files.get({ fileId: matchingTxt.id, alt: 'media' });
+        stylePrompt = txtRes.data.toString();
+      }
+
+      console.log(`Generating Single Luxury Variant for: ${skeleton.name}`);
+      
+      try {
+        const predictionResponse = await generativeModel.predict({
+          instances: [{ prompt: stylePrompt }],
+          parameters: { sampleCount: 1 }
+        });
+        
+        const base64Str = predictionResponse.predictions[0].bytesBase64Encoded;
+        const imageBuffer = Buffer.from(base64Str, 'base64');
+        const fileRef = bucket.file(`renders/${fileName}`);
+        await fileRef.save(imageBuffer, { metadata: { contentType: 'image/png' } });
+        
+        firebaseSignedUrls.push(`https://firebasestorage.googleapis.com/v0/b/${process.env.FIREBASE_STORAGE_BUCKET}/o/renders%2F${fileName}?alt=media`);
+      } catch (genError) {
+        firebaseSignedUrls.push(`GENERATION_ERROR: ${genError.message.replace(/,/g, '_')}`);
       }
 
       await sheets.spreadsheets.values.append({
@@ -120,10 +107,10 @@ export default async function handler(request, response) {
         valueInputOption: 'USER_ENTERED',
         resource: { values: [[
           `SKEL-${Date.now()}`,
-          'Autonomously Detected',
+          skeleton.name.split('.')[0],
           `https://drive.google.com/file/d/${skeleton.id}/view`,
-          firebaseSignedUrls.join(','),
-          `Luxury Variant Series: ${skeleton.name}`,
+          firebaseSignedUrls[0] || 'FAILED',
+          'Luxury Original',
           'Processed automatically by Vertex AI.',
           'Price TBD',
           'Live'
