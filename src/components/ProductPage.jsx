@@ -1,142 +1,262 @@
-import React, { useState, useMemo } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import React, { useState, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import './ProductPage.css';
 
-const ProductPage = ({ product }) => {
-  const [showCraftsmanshipMode, setShowCraftsmanshipMode] = useState(false);
-  // Angle view: null means "show the finished render", a number = index into angleViews
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILITY
+// ─────────────────────────────────────────────────────────────────────────────
+const getDriveUrl = (url) => {
+  if (!url) return '';
+  if (typeof url !== 'string') return url;
+  if (url.includes('drive.google.com')) {
+    const m = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
+    return m ? `/api/image?id=${m[1]}` : url;
+  }
+  return url;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEGMENT OPTIONS  ← change labels/order here freely
+// ─────────────────────────────────────────────────────────────────────────────
+const SEGMENTS = [
+  { id: '360',    label: '360° View', icon: '⟳' },
+  { id: 'studio', label: 'Studio',    icon: '✦'  },
+  { id: 'angles', label: 'Angles',    icon: '⊞'  },
+  { id: 'sketch', label: 'Sketch',    icon: '✏'  },
+];
+const ANGLE_LABELS = ['Front', 'Side →', 'Back', '← Side'];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEDIA DISPLAY MODULE
+// Swap this entire component if you want a different layout style.
+// ─────────────────────────────────────────────────────────────────────────────
+const MediaDisplay = ({ segment, studioUrl, rawImageUrl, angleGridUrl, videoUrl }) => {
   const [activeAngle, setActiveAngle] = useState(null);
-  
-  const getDirectImageUrl = (url) => {
-    if (!url) return '';
-    if (typeof url !== 'string') return url;
-    if (url.includes('drive.google.com')) {
-      const idMatch = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
-      return idMatch ? `/api/image?id=${idMatch[1]}` : url;
+  const videoRef = useRef(null);
+
+  // When the segment changes, reset angle selection
+  const prevSegment = useRef(segment);
+  if (prevSegment.current !== segment) {
+    prevSegment.current = segment;
+    // defer state reset outside render
+    setTimeout(() => setActiveAngle(null), 0);
+  }
+
+  // Main display frame
+  const renderMain = () => {
+    if (segment === '360') {
+      return videoUrl ? (
+        <div className="md-video-wrapper">
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            className="md-video"
+            autoPlay
+            loop
+            muted
+            playsInline
+            controlsList="nodownload"
+          />
+          <div className="md-video-badge">360°</div>
+        </div>
+      ) : (
+        <div className="md-placeholder">
+          <span className="md-placeholder-icon">⟳</span>
+          <p>No 360° video for this variant yet</p>
+        </div>
+      );
     }
-    return url;
+
+    if (segment === 'sketch') {
+      return rawImageUrl ? (
+        <div className="md-sketch-wrapper">
+          <img src={rawImageUrl} alt="Blueprint Skeleton" className="md-img md-sketch" />
+          <div className="md-sketch-badge">Blueprint</div>
+        </div>
+      ) : (
+        <div className="md-placeholder">
+          <span className="md-placeholder-icon">✏</span>
+          <p>No skeleton image available</p>
+        </div>
+      );
+    }
+
+    // Studio: full render
+    if (segment === 'studio') {
+      return (
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={studioUrl}
+            src={studioUrl}
+            alt="Studio Render"
+            className="md-img"
+            initial={{ opacity: 0, scale: 1.03 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          />
+        </AnimatePresence>
+      );
+    }
+
+    // Angles: CSS-cropped grid — zoom into selected quadrant
+    if (segment === 'angles') {
+      const showCrop = activeAngle !== null && angleGridUrl;
+      return (
+        <div className={`md-angles-frame ${showCrop ? `active-q${activeAngle}` : ''}`}>
+          {angleGridUrl ? (
+            <img
+              src={getDriveUrl(angleGridUrl)}
+              alt="Angle View"
+              className="md-grid-img"
+            />
+          ) : (
+            <div className="md-placeholder">
+              <span className="md-placeholder-icon">⊞</span>
+              <p>No angle images for this variant yet</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return null;
   };
 
-  // Parse comma-separated images from the sheet
-  const images = useMemo(() => {
-    return product.finishedImage.split(',').map(u => getDirectImageUrl(u.trim()));
-  }, [product.finishedImage]);
+  return (
+    <div className="media-display">
+      {/* ── Main Frame ── */}
+      <div className="md-main-frame">
+        {renderMain()}
+      </div>
 
-  const rawImageProcessed = useMemo(() => getDirectImageUrl(product.rawImage), [product.rawImage]);
+      {/* ── Angle Thumbnail Strip (only in Angles mode) ── */}
+      {segment === 'angles' && angleGridUrl && (
+        <div className="md-angle-strip">
+          {ANGLE_LABELS.map((label, idx) => (
+            <button
+              key={idx}
+              className={`md-angle-thumb quadrant-${idx} ${activeAngle === idx ? 'active' : ''}`}
+              onClick={() => setActiveAngle(activeAngle === idx ? null : idx)}
+              title={label}
+            >
+              <div className="md-thumb-crop">
+                <img src={getDriveUrl(angleGridUrl)} alt={label} />
+              </div>
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
-  const [selectedStyleIndex, setSelectedStyleIndex] = useState(0);
-
-  // Styles labels mapping dynamically from the DB or falling back to defaults
-  const styleLabels = product.styleNames || ['Walnut / Cream', 'Oak / Forest Green', 'Black / Tan'];
-
-  // angle-view URLs (could be one global grid or one per style)
-  const angleViewsArray = product.angleViews || [];
-  const currentAngleGrid = angleViewsArray[selectedStyleIndex] || angleViewsArray[0] || '';
-  const angleViews = currentAngleGrid ? [currentAngleGrid] : [];
-  
-  const angleLabels = ['Front', 'Side →', 'Back', '← Side'];
-
-  // 3D Tilt Logic
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const mouseXSpring = useSpring(x);
-  const mouseYSpring = useSpring(y);
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["10deg", "-10deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
+// ─────────────────────────────────────────────────────────────────────────────
+// PRODUCT PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+const ProductPage = ({ product }) => {
+  const [selectedStyle, setSelectedStyle]   = useState(0);
+  const [activeSegment, setActiveSegment]   = useState('360');
 
   if (!product) return null;
 
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const xPct = (e.clientX - rect.left) / rect.width - 0.5;
-    const yPct = (e.clientY - rect.top) / rect.height - 0.5;
-    x.set(xPct);
-    y.set(yPct);
-  };
+  const styleLabels = product.styleNames?.length
+    ? product.styleNames
+    : ['Default'];
 
-  // Priority: craftsmanship toggle > angle view > selected style render
-  const currentImage = showCraftsmanshipMode
-    ? rawImageProcessed
-    : activeAngle !== null && angleViews.length > 0
-      ? getDirectImageUrl(angleViews.length === 1 ? angleViews[0] : angleViews[activeAngle])
-      : images[selectedStyleIndex];
+  // Per-style data (all arrays aligned by style index)
+  const studioImages = useMemo(() =>
+    product.finishedImage ? product.finishedImage.split(',').map(u => getDriveUrl(u.trim())) : [],
+  [product.finishedImage]);
+
+  const angleGrids = useMemo(() =>
+    product.angleViews || [],
+  [product.angleViews]);
+
+  const videos = useMemo(() =>
+    product.videos || [],
+  [product.videos]);
+
+  const rawImageUrl   = getDriveUrl(product.rawImage);
+  const studioUrl     = studioImages[selectedStyle] || studioImages[0] || '';
+  const angleGridUrl  = angleGrids[selectedStyle]   || angleGrids[0]   || '';
+  const videoUrl      = getDriveUrl(videos[selectedStyle] || videos[0] || '');
+
+  // Hide segments that have no data at all
+  const availableSegments = SEGMENTS.filter(seg => {
+    if (seg.id === '360'    && !videos.some(Boolean))       return false;
+    if (seg.id === 'sketch' && !rawImageUrl)                return false;
+    if (seg.id === 'studio' && studioImages.length === 0)   return false;
+    if (seg.id === 'angles' && angleGrids.length === 0)     return false;
+    return true;
+  });
+
+  // If active segment is hidden, fall back to first available
+  const currentSegment = availableSegments.find(s => s.id === activeSegment)
+    ? activeSegment
+    : (availableSegments[0]?.id || 'studio');
 
   return (
     <div className="product-page-container">
       <div className="product-grid-layout">
-        
-        <div className="product-media-section">
-          <motion.div 
-            className="main-image-container"
-            style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => { x.set(0); y.set(0); }}
-          >
-            <motion.img 
-              key={currentImage}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              src={currentImage} 
-              alt={product.name} 
-              className={`main-product-image ${showCraftsmanshipMode ? 'is-raw' : 'is-finished'}`} 
-              style={{ transform: "translateZ(50px)" }}
-            />
-          </motion.div>
 
-          {/* ── Angle View Thumbnail Strip ── */}
-          {angleViews.length > 0 && (
-            <div className={`angle-strip ${angleViews.length === 1 ? 'is-grid-mode' : 'is-split-mode'}`}>
-              {(angleViews.length === 1 ? [0, 1, 2, 3] : angleViews).map((item, idx) => {
-                const url = angleViews.length === 1 ? angleViews[0] : item;
-                return (
-                  <button
-                    key={idx}
-                    className={`angle-thumb ${activeAngle === idx ? 'active' : ''} quadrant-${idx}`}
-                    onClick={() => {
-                      setActiveAngle(activeAngle === idx ? null : idx);
-                      setShowCraftsmanshipMode(false);
-                    }}
-                    title={angleLabels[idx]}
-                  >
-                    <div className="thumb-crop-box">
-                      <img src={getDirectImageUrl(url)} alt={angleLabels[idx]} />
-                    </div>
-                    <span>{angleLabels[idx]}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-          
-          <div className="craftsmanship-toggle-wrapper">
-            <span className={`toggle-label ${!showCraftsmanshipMode ? 'active' : ''}`}>Finished</span>
-            <button 
-              className={`toggle-switch ${showCraftsmanshipMode ? 'on' : 'off'}`}
-              onClick={() => setShowCraftsmanshipMode(!showCraftsmanshipMode)}
-            >
-              <span className="toggle-thumb"></span>
-            </button>
-            <span className={`toggle-label ${showCraftsmanshipMode ? 'active' : ''}`}>Craftsmanship</span>
+        {/* ── LEFT: Media ── */}
+        <div className="product-media-section">
+
+          {/* Segmented Control */}
+          <div className="segment-control" role="tablist">
+            {availableSegments.map(seg => (
+              <button
+                key={seg.id}
+                role="tab"
+                aria-selected={currentSegment === seg.id}
+                className={`segment-btn ${currentSegment === seg.id ? 'active' : ''}`}
+                onClick={() => setActiveSegment(seg.id)}
+              >
+                <span className="seg-icon">{seg.icon}</span>
+                <span className="seg-label">{seg.label}</span>
+              </button>
+            ))}
+            {/* Sliding active pill — pure CSS driven by :has() */}
           </div>
+
+          {/* Media Display (swap this component for a different layout style) */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentSegment}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="media-motion-wrapper"
+            >
+              <MediaDisplay
+                segment={currentSegment}
+                studioUrl={studioUrl}
+                rawImageUrl={rawImageUrl}
+                angleGridUrl={angleGridUrl}
+                videoUrl={videoUrl}
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
 
+        {/* ── RIGHT: Details ── */}
         <div className="product-details-section">
           <p className="product-sku">SKU: {product.id}</p>
           <h1 className="product-title-large">{product.name}</h1>
           <p className="product-price-large">{product.price}</p>
-          
+
+          {/* Style / Finish Picker */}
           <div className="finish-picker-container">
             <h4 className="picker-title">Select Finish</h4>
             <div className="style-chips">
               {styleLabels.map((label, index) => (
-                <button 
+                <button
                   key={label}
-                  className={`style-chip ${selectedStyleIndex === index ? 'active' : ''}`}
-                  onClick={() => {
-                    setSelectedStyleIndex(index);
-                    setShowCraftsmanshipMode(false);
-                    setActiveAngle(null); // reset angle when switching style
-                  }}
+                  className={`style-chip ${selectedStyle === index ? 'active' : ''}`}
+                  onClick={() => setSelectedStyle(index)}
                 >
                   <div className={`color-dot style-${index}`} />
                   {label}
@@ -148,22 +268,26 @@ const ProductPage = ({ product }) => {
           <div className="product-description-container">
             <p className="product-description-text">{product.description}</p>
           </div>
-          
+
           <div className="product-actions">
-            <button className="apple-btn-primary" onClick={() => window.open(`https://wa.me/923001234567`, '_blank')}>
-              Order Variant: {styleLabels[selectedStyleIndex]}
+            <button
+              className="apple-btn-primary"
+              onClick={() => window.open('https://wa.me/923001234567', '_blank')}
+            >
+              Order Variant: {styleLabels[selectedStyle]}
             </button>
           </div>
-          
+
           <div className="product-materials">
             <h3 className="materials-title">Specifications</h3>
             <ul className="materials-list">
-              <li>Current Style: {styleLabels[selectedStyleIndex]}</li>
-              <li>Finish Profile: Luxury {styleLabels[selectedStyleIndex]}</li>
-              <li>Dimensions: 34"W x 36"D x 38"H</li>
+              <li>Current Style: {styleLabels[selectedStyle]}</li>
+              <li>Finish Profile: Luxury {styleLabels[selectedStyle]}</li>
+              <li>Dimensions: 34"W × 36"D × 38"H</li>
             </ul>
           </div>
         </div>
+
       </div>
     </div>
   );

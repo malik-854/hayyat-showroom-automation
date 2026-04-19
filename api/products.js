@@ -16,7 +16,7 @@ export default async function handler(request, response) {
     // 2. Fetch the catalog from your Sheet
     const sheetRes = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.CATALOG_SHEET_ID,
-      range: 'Sheet1!A2:I100', // Skip header; Col I = angle_views (4 URLs from grid slicer)
+      range: 'Sheet1!A2:J100', // Col I = angle grids, Col J = 360 videos
     });
 
     const rows = sheetRes.data.values;
@@ -38,13 +38,15 @@ export default async function handler(request, response) {
         id: row[0],
         name: row[1],
         rawImage: row[2],
-        finishedImage: finishedImage, 
+        finishedImage: finishedImage,
         isGridFallback: isGridFallback,
         styleNames: row[4] ? row[4].split(',').map(s => s.trim()) : [],
         description: row[5],
         price: row[6],
         status: row[7],
         angleViews: gridLink ? gridLink.split(',').map(s => s.trim()).filter(Boolean) : [],
+        // Col J: 360° video per variant — comma-separated, same order as styleNames
+        videos: row[9] ? row[9].split(',').map(s => s.trim()) : [],
       };
     });
 

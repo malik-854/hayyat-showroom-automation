@@ -1,335 +1,197 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   PRODUCT PAGE — CSS
+   Style token: "apple-segmented"  ← change this comment when swapping styles
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Page Shell ─────────────────────────────────────────────────────── */
 .product-page-container {
   background-color: var(--bg-dark);
   color: white;
   min-height: 100vh;
-  padding: 8rem 2rem 4rem;
+  padding: 8rem 2rem 6rem;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   letter-spacing: -0.01em;
 }
 
 .product-grid-layout {
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6rem;
-  align-items: center;
+  gap: 5rem;
+  align-items: start;
 }
 
 @media (max-width: 900px) {
-  .product-grid-layout {
-    grid-template-columns: 1fr;
-    gap: 3rem;
-  }
+  .product-grid-layout { grid-template-columns: 1fr; gap: 2.5rem; }
 }
 
-/* LEFT SIDE: Media Gallery */
+/* ─── LEFT: Media column ─────────────────────────────────────────────── */
 .product-media-section {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2rem;
+  gap: 1.25rem;
+  position: sticky;
+  top: 6rem;
 }
 
-.main-image-container {
+.media-motion-wrapper { width: 100%; }
+
+/* ─── Segmented Control ──────────────────────────────────────────────── */
+.segment-control {
+  display: flex;
+  gap: 0.35rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 0.35rem;
   width: 100%;
-  aspect-ratio: 3/4;
-  background: #151518;
+}
+
+.segment-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.5rem;
+  border-radius: 11px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #86868b;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+}
+
+.segment-btn:hover:not(.active) {
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.06);
+}
+
+.segment-btn.active {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.seg-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+.seg-label { line-height: 1; }
+
+/* ─── Media Display ──────────────────────────────────────────────────── */
+.media-display {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Main display frame */
+.md-main-frame {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background: #111113;
   border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.5);
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--glass-border);
 }
 
-.main-product-image {
+/* ─── Studio / Sketch images ─────────────────────────────────────────── */
+.md-img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transition: opacity 0.4s ease-in-out;
 }
 
-/* ── Main View Grid Cropping ── */
-.product-media-section:has(.is-grid-mode) .main-product-image {
-  /* Default state for grid image or AI render: show full */
-  object-fit: contain;
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
+/* Sketch overlay feel */
+.md-sketch-wrapper { position: relative; width: 100%; height: 100%; }
+.md-sketch { opacity: 0.7; filter: grayscale(25%); }
 
-/* ONLY zoom if an angle thumbnail is active */
-.product-media-section:has(.angle-thumb.active) .main-product-image:not(.is-raw) {
-    width: 200%;
-    height: 200%;
-    object-fit: cover;
-    position: absolute;
-    max-width: none;
-}
-
-/* Position based on which thumbnail is active */
-.product-media-section:has(.quadrant-0.active) .main-product-image { top: 0; left: 0; }
-.product-media-section:has(.quadrant-1.active) .main-product-image { top: 0; left: -100%; }
-.product-media-section:has(.quadrant-2.active) .main-product-image { top: -100%; left: 0; }
-.product-media-section:has(.quadrant-3.active) .main-product-image { top: -100%; left: -100%; }
-
-.main-product-image.is-raw {
-  opacity: 0.6;
-  filter: grayscale(20%);
-  /* Ensure raw image is never cropped even if angle was selected */
-  width: 100% !important;
-  height: 100% !important;
-  position: relative !important;
-  object-fit: contain !important;
-  top: auto !important;
-  left: auto !important;
-}
-
-/* Custom Toggle Switch for Craftsmanship Mode */
-.craftsmanship-toggle-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background: var(--glass-bg);
-  padding: 0.5rem 1rem;
+.md-sketch-badge, .md-video-badge {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.15);
   border-radius: 30px;
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(10px);
-}
-
-.toggle-label {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #86868b;
-  transition: color 0.3s ease;
-}
-
-.toggle-label.active {
-  color: white;
-  font-weight: 600;
-}
-
-.toggle-switch {
-  width: 50px;
-  height: 28px;
-  background: #333336;
-  border-radius: 14px;
-  position: relative;
-  transition: background 0.3s ease;
-}
-
-.toggle-switch.on {
-  background: var(--gold); 
-}
-
-.toggle-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 24px;
-  height: 24px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.toggle-switch.on .toggle-thumb {
-  transform: translateX(22px);
-}
-
-/* RIGHT SIDE: Details */
-.product-details-section {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.product-sku {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #86868b;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
-}
-
-.product-title-large {
-  font-size: 3.5rem;
-  font-weight: 600;
-  line-height: 1.1;
-  margin-bottom: 1rem;
-  color: white;
-}
-
-.product-price-large {
-  font-size: 1.5rem;
-  font-weight: 500;
   color: #d4af37;
-  margin-bottom: 2rem;
 }
 
-.product-description-container {
-  margin-bottom: 3rem;
-}
-
-.product-description-text {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: #a0a0a5;
-  margin-bottom: 1.5rem;
-}
-
-/* Action Buttons */
-.product-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 3rem;
-  border-bottom: 1px solid var(--glass-border);
-  padding-bottom: 3rem;
-}
-
-.apple-btn-primary {
-  background: white;
-  color: #1d1d1f;
-  border-radius: 980px; /* pill shape */
-  padding: 1.2rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 14px rgba(255,255,255,0.1);
-}
-
-.apple-btn-primary:hover {
-  background: #f5f5f7;
-  transform: scale(1.02);
-  box-shadow: 0 6px 20px rgba(255,255,255,0.2);
-}
-
-.whatsapp-icon {
-  display: flex;
-  align-items: center;
-}
-
-.delivery-info {
-  font-size: 0.85rem;
-  color: #86868b;
-  text-align: center;
-}
-
-/* Materials */
-.materials-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: white;
-}
-
-.materials-list {
-  list-style: none;
-  color: #a0a0a5;
-  font-size: 1rem;
-  line-height: 2;
-}
-
-.materials-list li {
+/* ─── 360° Video ─────────────────────────────────────────────────────── */
+.md-video-wrapper {
   position: relative;
-  padding-left: 1.5rem;
+  width: 100%;
+  height: 100%;
 }
 
-.materials-list li::before {
-  content: '•';
-  position: absolute;
-  left: 0;
-  color: var(--glass-border);
+.md-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-/* Finish Picker */
-.finish-picker-container {
-  margin-bottom: 2.5rem;
-}
-
-.picker-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #86868b;
-  margin-bottom: 1rem;
-  letter-spacing: 0.05em;
-}
-
-.style-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.style-chip {
-  padding: 0.6rem 1rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  color: #a0a0a5;
-  font-size: 0.9rem;
-  font-weight: 500;
+/* ─── Angles: CSS Grid Crop ──────────────────────────────────────────── */
+.md-angles-frame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.style-chip:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.style-chip.active {
-  background: white;
-  color: #1d1d1f;
-  border-color: white;
-}
-
-.color-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.style-0 { background: #5d4037; } /* Walnut */
-.style-1 { background: #2e7d32; } /* Forest Green */
-.style-2 { background: #212121; } /* Black */
-
-.style-chip.active .color-dot {
-  outline: 2px solid rgba(0,0,0,0.1);
-  outline-offset: 2px;
-}
-
-/* ─── Angle View Thumbnail Strip ────────────────────────────────────────────── */
-.angle-strip {
-  display: flex;
-  gap: 0.6rem;
-  width: 100%;
   justify-content: center;
 }
 
-.angle-thumb {
+.md-grid-img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+              top 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+              left 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  /* Default: show full grid */
+  top: 0; left: 0;
+}
+
+/* Quadrant zoom — 2×2 grid, each takes 50% of image */
+.md-angles-frame.active-q0 .md-grid-img { width: 200%; height: 200%; top: 0;    left: 0;    }
+.md-angles-frame.active-q1 .md-grid-img { width: 200%; height: 200%; top: 0;    left: -100%;}
+.md-angles-frame.active-q2 .md-grid-img { width: 200%; height: 200%; top: -100%;left: 0;    }
+.md-angles-frame.active-q3 .md-grid-img { width: 200%; height: 200%; top: -100%;left: -100%;}
+
+/* ─── Angle Thumbnail Strip ──────────────────────────────────────────── */
+.md-angle-strip {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.md-angle-thumb {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.4rem 0.3rem 0.5rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  gap: 0.3rem;
+  padding: 0.4rem 0.2rem 0.45rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -337,59 +199,162 @@
   min-width: 0;
 }
 
-.thumb-crop-box {
+.md-thumb-crop {
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 8px;
+  border-radius: 7px;
   overflow: hidden;
   position: relative;
 }
 
-.angle-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-/* ─── Grid Mode Slicing (CSS Only) ─── */
-.is-grid-mode .angle-thumb img {
+/* CSS-only quadrant slicing in thumbnails */
+.md-angle-thumb img {
   width: 200%;
   height: 200%;
   max-width: none;
   position: absolute;
+  object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
-.is-grid-mode .quadrant-0 img { top: 0; left: 0; }
-.is-grid-mode .quadrant-1 img { top: 0; left: -100%; }
-.is-grid-mode .quadrant-2 img { top: -100%; left: 0; }
-.is-grid-mode .quadrant-3 img { top: -100%; left: -100%; }
+.quadrant-0 img { top: 0;    left: 0;     }
+.quadrant-1 img { top: 0;    left: -100%; }
+.quadrant-2 img { top: -100%;left: 0;     }
+.quadrant-3 img { top: -100%;left: -100%; }
 
-.angle-thumb span {
-  font-size: 0.65rem;
-  font-weight: 600;
+.md-angle-thumb span {
+  font-size: 0.6rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: #86868b;
   transition: color 0.25s ease;
   white-space: nowrap;
 }
 
-.angle-thumb:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+.md-angle-thumb:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); }
+.md-angle-thumb:hover img { transform: scale(1.06); }
+.md-angle-thumb.active { border-color: var(--gold, #d4af37); background: rgba(212,175,55,0.08); }
+.md-angle-thumb.active span { color: var(--gold, #d4af37); }
+
+/* ─── Placeholder state ──────────────────────────────────────────────── */
+.md-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: #555;
+  padding: 2rem;
+  text-align: center;
+}
+.md-placeholder-icon { font-size: 2.5rem; opacity: 0.4; }
+.md-placeholder p    { font-size: 0.9rem; line-height: 1.5; opacity: 0.6; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RIGHT: Details pane
+   ═══════════════════════════════════════════════════════════════════════ */
+.product-details-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 0.5rem;
 }
 
-.angle-thumb:hover img {
-  transform: scale(1.06);
+.product-sku {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
 }
 
-.angle-thumb.active {
-  border-color: var(--gold, #d4af37);
-  background: rgba(212, 175, 55, 0.08);
+.product-title-large {
+  font-size: clamp(2.4rem, 4vw, 3.5rem);
+  font-weight: 600;
+  line-height: 1.1;
+  margin-bottom: 0.8rem;
+  color: white;
 }
 
-.angle-thumb.active span {
-  color: var(--gold, #d4af37);
+.product-price-large {
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: #d4af37;
+  margin-bottom: 2rem;
 }
 
+/* Finish Picker */
+.finish-picker-container { margin-bottom: 2.5rem; }
+
+.picker-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #555;
+  margin-bottom: 0.85rem;
+  letter-spacing: 0.06em;
+}
+
+.style-chips { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+.style-chip {
+  padding: 0.55rem 1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 12px;
+  color: #a0a0a5;
+  font-size: 0.88rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+.style-chip:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+.style-chip.active { background: white; color: #1d1d1f; border-color: white; }
+
+.color-dot { width: 11px; height: 11px; border-radius: 50%; }
+.style-0 { background: #5d4037; }
+.style-1 { background: #2e7d32; }
+.style-2 { background: #212121; }
+.style-chip.active .color-dot { outline: 2px solid rgba(0,0,0,0.12); outline-offset: 2px; }
+
+/* Description */
+.product-description-container { margin-bottom: 2.5rem; }
+.product-description-text { font-size: 1.05rem; line-height: 1.65; color: #888; }
+
+/* Actions */
+.product-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: 2.5rem;
+}
+
+.apple-btn-primary {
+  background: white;
+  color: #1d1d1f;
+  border-radius: 980px;
+  padding: 1.1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(255,255,255,0.08);
+  cursor: pointer;
+}
+.apple-btn-primary:hover { background: #f5f5f7; transform: scale(1.02); box-shadow: 0 6px 28px rgba(255,255,255,0.16); }
+
+/* Materials */
+.materials-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; color: white; }
+
+.materials-list { list-style: none; color: #888; font-size: 0.95rem; line-height: 2.1; }
+.materials-list li { position: relative; padding-left: 1.4rem; }
+.materials-list li::before { content: '—'; position: absolute; left: 0; color: #444; font-size: 0.7rem; top: 0.35rem; }

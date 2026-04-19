@@ -43,7 +43,7 @@ export default async function handler(request, response) {
       const prefix = parts[0]; 
       
       if (!productsMap[prefix]) {
-        productsMap[prefix] = { id: prefix, name: prefix, skeleton: null, variants: [], globalGrid: null };
+        productsMap[prefix] = { id: prefix, name: prefix, skeleton: null, variants: [], globalGrid: null, variantGrids: {}, variantVideos: {} };
       }
 
       const fileNameLower = file.name.toLowerCase();
@@ -51,19 +51,23 @@ export default async function handler(request, response) {
       if (fileNameLower.includes('_skeleton')) {
         productsMap[prefix].skeleton = file.webViewLink;
       } else if (fileNameLower.includes('_ai')) {
-        // Robust check for grids (including common typos)
-        const isGrid = fileNameLower.includes('_grid') || fileNameLower.includes('_gird');
-        
-        // Clean up the style name: 
+        // Robust check for grids (including common typos) and 360 videos
+        const isGrid  = fileNameLower.includes('_grid') || fileNameLower.includes('_gird');
+        const isVideo = fileNameLower.includes('_360');
+
+        // Clean up the style name:
         // 1. Remove the prefix and '_Ai_'
-        // 2. Remove '_grid' or '_gird' or '.jpg' etc.
+        // 2. Remove '_grid', '_gird', '_360', or file extension
         let styleName = file.name.split(/_ai_/i)[1] || '';
         styleName = styleName.split(/\.(?=[^.]*$)/)[0]; // Remove extension
-        styleName = styleName.replace(/_grid/i, '').replace(/_gird/i, '').replace(/_/g, ' ').trim();
+        styleName = styleName.replace(/_grid/i, '').replace(/_gird/i, '').replace(/_360/i, '').replace(/_/g, ' ').trim();
 
         if (isGrid) {
             if (!productsMap[prefix].variantGrids) productsMap[prefix].variantGrids = {};
             productsMap[prefix].variantGrids[styleName] = file.webViewLink;
+        } else if (isVideo) {
+            if (!productsMap[prefix].variantVideos) productsMap[prefix].variantVideos = {};
+            productsMap[prefix].variantVideos[styleName] = file.webViewLink;
         } else {
             productsMap[prefix].variants.push({
               url: file.webViewLink,
@@ -92,25 +96,30 @@ export default async function handler(request, response) {
     const newRows = [];
     for (const prod of productsToSync) {
       if (!existingIds.includes(prod.id)) {
-        // Map each variant to its best matching grid
+        // Map each variant to its best matching grid and video
         const assignedGrids = prod.variants.map(v => {
             const variantGrid = prod.variantGrids && prod.variantGrids[v.style];
             return variantGrid || prod.globalGrid || '';
         });
+        const assignedVideos = prod.variants.map(v => {
+            return (prod.variantVideos && prod.variantVideos[v.style]) || '';
+        });
 
-        // Special case: if no variants but has a global grid, we still want the grid link
-        const finalGridString = assignedGrids.length > 0 ? assignedGrids.join(',') : (prod.globalGrid || '');
+        // Special case: if no variants but has a global grid, still write the grid link
+        const finalGridString  = assignedGrids.length  > 0 ? assignedGrids.join(',')  : (prod.globalGrid || '');
+        const finalVideoString = assignedVideos.length > 0 ? assignedVideos.join(',') : '';
 
         newRows.push([
           prod.id,
-          prod.name.replace(/-/g, ' '), 
+          prod.name.replace(/-/g, ' '),
           prod.skeleton,
           prod.variants.map(v => v.url).join(','),
           prod.variants.map(v => v.style).join(','),
           `High-end ${prod.name} with custom artisan variations.`,
           'Price TBD',
           'Live',
-          finalGridString // Column I: List of grids matching the variants in Col D
+          finalGridString,  // Column I: Grids matching variants in Col D
+          finalVideoString, // Column J: 360° Videos matching variants in Col D
         ]);
       }
     }
@@ -118,7 +127,7 @@ export default async function handler(request, response) {
     if (newRows.length > 0) {
       await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.CATALOG_SHEET_ID,
-        range: 'Sheet1!A:I',
+        range: 'Sheet1!A:J',
         valueInputOption: 'USER_ENTERED',
         resource: { values: newRows }
       });
