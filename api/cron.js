@@ -11,6 +11,7 @@ export default async function handler(request, response) {
   }
 
   try {
+    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
     console.log('--- STARTING AUTONOMOUS VERCEL CRON ---');
 
     // 1. Initialize Google Auth from Environment Variables (Not local JSON)
