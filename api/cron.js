@@ -1,6 +1,4 @@
 import { google } from 'googleapis';
-import admin from 'firebase-admin';
-import { VertexAI } from '@google-cloud/vertexai';
 
 export default async function handler(request, response) {
   const isValidAuthHeader = request.headers.authorization === `Bearer ${process.env.CRON_SECRET}`;
@@ -11,132 +9,103 @@ export default async function handler(request, response) {
   }
 
   try {
-    delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
-    console.log('--- STARTING AUTONOMOUS VERCEL CRON ---');
-
-    // Utility for formatted private key
-    const getPrivateKey = () => (process.env.GOOGLE_PRIVATE_KEY || '').replace(/"/g, '').replace(/\\n/g, '\n').replace(/\r/g, '').trim();
-    const privateKey = getPrivateKey();
+    // 1. Initialize Google Auth
+    const privateKey = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/"/g, '').replace(/\\n/g, '\n').replace(/\r/g, '').trim();
     const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-    const projectId = process.env.GOOGLE_PROJECT_ID;
 
-    // 1. Initialize Google Auth for Sheets/Drive
     const auth = new google.auth.GoogleAuth({
       credentials: { client_email: clientEmail, private_key: privateKey },
       scopes: [
         'https://www.googleapis.com/auth/drive.readonly',
-        'https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/cloud-platform'
+        'https://www.googleapis.com/auth/spreadsheets'
       ],
     });
 
     const drive = google.drive({ version: 'v3', auth });
+    const sheets = google.sheets({ version: 'v4', auth });
 
-    // 2. Query Google Drive - Simplified to ensure NO files are missed
+    // 2. Scan for ALL files in the skeleton folder
     const driveRes = await drive.files.list({
       q: `'${process.env.SKELETON_FOLDER_ID}' in parents and trashed = false`,
-      fields: 'files(id, name, mimeType)',
+      fields: 'files(id, name, webViewLink, mimeType)',
     });
 
     const allFiles = driveRes.data.files;
-    const newFiles = allFiles.filter(f => f.mimeType.includes('image/'));
-    const textFiles = allFiles.filter(f => f.mimeType.includes('text/plain') || f.name.endsWith('.txt'));
-    
-    if (!newFiles || newFiles.length === 0) {
-      console.log('No images found in folder:', process.env.SKELETON_FOLDER_ID);
-      return response.status(200).json({ message: 'Success', processed: 0, scanned: allFiles.length });
+    if (!allFiles || allFiles.length === 0) {
+      return response.status(200).json({ message: 'Folder is empty', processed: 0 });
     }
 
-    // 3. Initialize Firebase
-    if (!admin.apps.length) {
-      admin.initializeApp({
-        credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-      });
-    }
-    const bucket = admin.storage().bucket();
-    const sheets = google.sheets({ version: 'v4', auth });
+    // 3. GROUPING LOGIC: Group files by their prefix (everything before the first '_')
+    const productsMap = {};
 
-    // 4. Initialize Vertex AI for Generation
-    const vertexAI = new VertexAI({
-      project: projectId,
-      location: 'us-central1',
-      googleAuthOptions: {
-        credentials: { client_email: clientEmail, private_key: privateKey }
-      }
-    });
-    const generativeModel = vertexAI.getGenerativeModel({
-      model: 'imagen-3.0-generate-002',
-    });
-
-    for (const skeleton of newFiles) {
-      const firebaseSignedUrls = [];
-      const fileName = `${skeleton.id}-variation.png`;
+    allFiles.forEach(file => {
+      const parts = file.name.split('_');
+      const prefix = parts[0]; 
       
-      // A. Try to find custom instructions in a .txt file with similar name
-      let stylePrompt = "High-end luxury furniture with premium finishes and cinematic showroom lighting.";
-      const baseName = skeleton.name.split('.')[0];
-      const matchingTxt = textFiles.find(t => t.name.startsWith(baseName));
-
-      if (matchingTxt) {
-        console.log(`Found custom instructions in ${matchingTxt.name}`);
-        const txtRes = await drive.files.get({ fileId: matchingTxt.id, alt: 'media' });
-        stylePrompt = txtRes.data.toString();
+      if (!productsMap[prefix]) {
+        productsMap[prefix] = { id: prefix, name: prefix, skeleton: null, variants: [] };
       }
 
-      console.log(`Generating Single Luxury Variant for: ${skeleton.name}`);
-      
-      try {
-        const endpoint = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/imagen-3.0-generate-002:predict`;
-        const accessToken = await auth.getAccessToken();
-
-        const predictionResponse = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            instances: [{ prompt: stylePrompt }],
-            parameters: { sampleCount: 1 }
-          })
+      if (file.name.toLowerCase().includes('_skeleton')) {
+        productsMap[prefix].skeleton = file.webViewLink;
+      } else if (file.name.toLowerCase().includes('_ai')) {
+        // Extract style name: Chair1_Ai1_Golden_Oak.jpg -> Golden Oak
+        // Logic: Get everything after the second underscore and before the extension
+        const styleName = parts.slice(2).join(' ').split('.')[0]; 
+        productsMap[prefix].variants.push({
+          url: file.webViewLink,
+          style: styleName || 'Luxury Variant'
         });
-
-        if (!predictionResponse.ok) {
-          const errData = await predictionResponse.json();
-          throw new Error(errData.error?.message || 'Prediction failed');
-        }
-
-        const data = await predictionResponse.json();
-        const base64Str = data.predictions[0].bytesBase64Encoded;
-        const imageBuffer = Buffer.from(base64Str, 'base64');
-        const fileRef = bucket.file(`renders/${fileName}`);
-        await fileRef.save(imageBuffer, { metadata: { contentType: 'image/png' } });
-        
-        firebaseSignedUrls.push(`https://firebasestorage.googleapis.com/v0/b/${process.env.FIREBASE_STORAGE_BUCKET}/o/renders%2F${fileName}?alt=media`);
-      } catch (genError) {
-        firebaseSignedUrls.push(`GENERATION_ERROR: ${genError.message.replace(/,/g, '_')}`);
       }
+    });
 
+    // 4. SYNC TO GOOGLE SHEET
+    const productsToSync = Object.values(productsMap).filter(p => p.skeleton && p.variants.length > 0);
+    
+    if (productsToSync.length === 0) {
+      return response.status(200).json({ message: 'No complete sets found (A set needs a _skeleton and at least one _Ai file)', processed: 0 });
+    }
+
+    // Get current sheet data to prevent duplicates
+    const currentSheet = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.CATALOG_SHEET_ID,
+      range: 'Sheet1!A:A',
+    });
+    const existingIds = (currentSheet.data.values || []).map(row => row[0]);
+
+    const newRows = [];
+    for (const prod of productsToSync) {
+      if (!existingIds.includes(prod.id)) {
+        newRows.push([
+          prod.id,
+          prod.name.replace(/-/g, ' '), // Prettier name
+          prod.skeleton,
+          prod.variants.map(v => v.url).join(','),
+          prod.variants.map(v => v.style).join(','),
+          `High-end ${prod.name} with custom artisan variations.`,
+          'Price TBD',
+          'Live'
+        ]);
+      }
+    }
+
+    if (newRows.length > 0) {
       await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.CATALOG_SHEET_ID,
         range: 'Sheet1!A:H',
         valueInputOption: 'USER_ENTERED',
-        resource: { values: [[
-          `SKEL-${Date.now()}`,
-          skeleton.name.split('.')[0],
-          `https://drive.google.com/file/d/${skeleton.id}/view`,
-          firebaseSignedUrls[0] || 'FAILED',
-          'Luxury Original',
-          'Processed automatically by Vertex AI.',
-          'Price TBD',
-          'Live'
-        ]]}
+        resource: { values: newRows }
       });
     }
 
-    return response.status(200).json({ message: 'Success', processed: newFiles.length });
+    return response.status(200).json({ 
+      message: 'Sync Complete', 
+      processed: newRows.length,
+      detected_groups: Object.keys(productsMap).length 
+    });
+
   } catch (error) {
+    console.error('CRON ERROR:', error);
     return response.status(500).json({ error: error.message });
   }
 }
