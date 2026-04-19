@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import admin from 'firebase-admin';
+import { GoogleGenAI } from '@google/genai';
 
 export default async function handler(request, response) {
   const isValidAuthHeader = request.headers.authorization === `Bearer ${process.env.CRON_SECRET}`;
@@ -65,20 +66,43 @@ export default async function handler(request, response) {
       
       const firebaseSignedUrls = [];
 
+      // Initialize Gemini SDK
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
       // Loop through styles to generate images
       for (let i = 0; i < styles.length; i++) {
         const style = styles[i];
-        
-        // --- GEMINI / IMAGEN API CALL WOULD GO HERE ---
-        // Vercel Serverless functions can use fetch() to send the Drive Image ArrayBuffer 
-        // to Google's GenAI / Vertex endpoints using your process.env.GEMINI_API_KEY
-        // -> const base64Image = await generateLuxuryRender(driveArrayBuffer, style, process.env.GEMINI_API_KEY);
-        
-        console.log(`[Generated] Image variant: ${style}`);
-        
-        // Example mock URL to simulate Firebase upload process using dynamic bucket env var
         const fileName = `${skeleton.id}-${i}.png`;
-        firebaseSignedUrls.push(`https://firebasestorage.googleapis.com/v0/b/${process.env.FIREBASE_STORAGE_BUCKET}/o/renders%2F${fileName}?alt=media`);
+        
+        console.log(`[Generating] Image variant via Imagen: ${style}`);
+        
+        try {
+          // 4A. Call GoogleGenAI Imagen model
+          const response = await ai.models.generateImages({
+            model: 'imagen-3.0-generate-002',
+            prompt: `A high-end luxury furniture piece in the style of ${style}. Minimalist boutique furniture showroom with cinematic lighting, architectural digest style.`,
+            config: {
+              numberOfImages: 1,
+              outputMimeType: "image/png",
+              aspectRatio: "1:1"
+            }
+          });
+          
+          const base64Str = response.generatedImages[0].image.imageBytes;
+          const imageBuffer = Buffer.from(base64Str, 'base64');
+
+          // 4B. Upload the physical buffer to Firebase using await
+          console.log(`Uploading ${fileName} to Firebase...`);
+          const fileRef = bucket.file(`renders/${fileName}`);
+          await fileRef.save(imageBuffer, {
+            metadata: { contentType: 'image/png' }
+          });
+          
+          firebaseSignedUrls.push(`https://firebasestorage.googleapis.com/v0/b/${process.env.FIREBASE_STORAGE_BUCKET}/o/renders%2F${fileName}?alt=media`);
+          console.log(`[Uploaded] ${fileName}`);
+        } catch (genError) {
+          console.error(`Failed to generate/upload variant ${style}:`, genError.message);
+        }
       }
 
       // 5. Append to Google Sheets
