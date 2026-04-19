@@ -61,6 +61,10 @@ export default async function handler(request, response) {
     // 4. Process Loop
     const styles = ['Walnut and Cream', 'Oak and Forest Green', 'Matte Black and Tan'];
     
+    if (!process.env.GEMINI_API_KEY) {
+      console.log('CRITICAL: GEMINI_API_KEY is missing in Vercel environment.');
+    }
+    
     for (const skeleton of newFiles) {
       console.log(`Processing New Upload: ${skeleton.name}`);
       
@@ -102,6 +106,7 @@ export default async function handler(request, response) {
           console.log(`[Uploaded] ${fileName}`);
         } catch (genError) {
           console.error(`Failed to generate/upload variant ${style}:`, genError.message);
+          firebaseSignedUrls.push(`GENERATION_ERROR: ${genError.message.replace(/,/g, '_')}`);
         }
       }
 
