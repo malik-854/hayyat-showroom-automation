@@ -1,5 +1,40 @@
 import { google } from 'googleapis';
 
+// Generate a 3-character alphanumeric suffix, e.g. "7X2"
+function randomSuffix() {
+  return Math.random().toString(36).substring(2, 5).toUpperCase();
+}
+
+// ─── Filename parser ────────────────────────────────────────────────────────
+// New format: Category_ProductName_Type.ext
+//   e.g.  Chair_The Azure Scandi_skeleton.jpg
+//         Chair_The Azure Scandi_Ai_Walnut.jpg
+//         Chair_The Azure Scandi_Ai_Walnut_grid.jpg
+//         Chair_The Azure Scandi_Ai_Walnut_360.mp4
+//
+// Returns { category, productName, typeStr }
+// typeStr is the raw suffix after `Category_ProductName_`, lowercased.
+function parseFilename(filename) {
+  // Strip extension
+  const noExt = filename.replace(/\.[^/.]+$/, '');
+  const parts  = noExt.split('_');
+
+  if (parts.length < 3) {
+    // Old format fallback: treat entire prefix as category, no productName
+    return { category: parts[0] || 'Unknown', productName: '', typeStr: parts.slice(1).join('_').toLowerCase() };
+  }
+
+  const category    = parts[0];                  // "Chair"
+  const productName = parts[1];                  // "The Azure Scandi"  (may have spaces — Drive replaces with spaces but filenames keep underscores, so we restore below)
+  const typeStr     = parts.slice(2).join('_').toLowerCase(); // "skeleton" | "ai_walnut" | "ai_walnut_grid" | "ai_walnut_360"
+
+  return {
+    category:    category.replace(/-/g, ' ').trim(),
+    productName: productName.replace(/-/g, ' ').trim(),
+    typeStr,
+  };
+}
+
 export default async function handler(request, response) {
   const isValidAuthHeader = request.headers.authorization === `Bearer ${process.env.CRON_SECRET}`;
   const isValidQuerySecret = request.query.secret === process.env.CRON_SECRET;
@@ -10,21 +45,21 @@ export default async function handler(request, response) {
 
   try {
     // 1. Initialize Google Auth
-    const privateKey = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/"/g, '').replace(/\\n/g, '\n').replace(/\r/g, '').trim();
-    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+    const privateKey   = (process.env.GOOGLE_PRIVATE_KEY || '').replace(/"/g, '').replace(/\\n/g, '\n').replace(/\r/g, '').trim();
+    const clientEmail  = process.env.GOOGLE_CLIENT_EMAIL;
 
     const auth = new google.auth.GoogleAuth({
       credentials: { client_email: clientEmail, private_key: privateKey },
       scopes: [
         'https://www.googleapis.com/auth/drive.readonly',
-        'https://www.googleapis.com/auth/spreadsheets'
+        'https://www.googleapis.com/auth/spreadsheets',
       ],
     });
 
-    const drive = google.drive({ version: 'v3', auth });
+    const drive  = google.drive({ version: 'v3', auth });
     const sheets = google.sheets({ version: 'v4', auth });
 
-    // 2. Scan for ALL files in the skeleton folder
+    // 2. Scan ALL files in the skeleton folder
     const driveRes = await drive.files.list({
       q: `'${process.env.SKELETON_FOLDER_ID}' in parents and trashed = false`,
       fields: 'files(id, name, webViewLink, mimeType)',
@@ -35,119 +70,138 @@ export default async function handler(request, response) {
       return response.status(200).json({ message: 'Folder is empty', processed: 0 });
     }
 
-    // 3. GROUPING LOGIC: Group files by their prefix (everything before the first '_')
+    // 3. GROUP files by "Category_ProductName" key
+    //    e.g. all "Chair_The Azure Scandi_*" files → one product
     const productsMap = {};
 
     allFiles.forEach(file => {
-      const parts = file.name.split('_');
-      const prefix = parts[0]; 
-      
-      if (!productsMap[prefix]) {
-        productsMap[prefix] = { id: prefix, name: prefix, skeleton: null, variants: [], globalGrid: null, variantGrids: {}, variantVideos: {} };
+      const { category, productName, typeStr } = parseFilename(file.name);
+
+      // Grouping key = "Category|ProductName"
+      const groupKey = `${category}|${productName}`;
+
+      if (!productsMap[groupKey]) {
+        productsMap[groupKey] = {
+          groupKey,
+          category,
+          productName,
+          skeleton:      null,
+          variants:      [],
+          variantGrids:  {},
+          variantVideos: {},
+          globalGrid:    null,
+        };
       }
 
-      const fileNameLower = file.name.toLowerCase();
+      const prod = productsMap[groupKey];
 
-      if (fileNameLower.includes('_skeleton')) {
-        productsMap[prefix].skeleton = file.webViewLink;
-      } else if (fileNameLower.includes('_ai')) {
-        // Robust check for grids (including common typos) and 360 videos
-        const isGrid  = fileNameLower.includes('_grid') || fileNameLower.includes('_gird');
-        const isVideo = fileNameLower.includes('_360');
+      if (typeStr === 'skeleton') {
+        prod.skeleton = file.webViewLink;
 
-        // Clean up the style name:
-        // 1. Remove the prefix and '_Ai_'
-        // 2. Remove '_grid', '_gird', '_360', or file extension
-        let styleName = file.name.split(/_ai_/i)[1] || '';
-        styleName = styleName.split(/\.(?=[^.]*$)/)[0]; // Remove extension
-        styleName = styleName.replace(/_grid/i, '').replace(/_gird/i, '').replace(/_360/i, '').replace(/_/g, ' ').trim();
+      } else if (typeStr.startsWith('ai')) {
+        // typeStr examples: "ai_walnut"  |  "ai_walnut_grid"  |  "ai_walnut_360"
+        const isGrid  = typeStr.includes('_grid') || typeStr.includes('_gird');
+        const isVideo = typeStr.includes('_360');
+
+        // Style name = everything after "ai_", minus _grid/_gird/_360 suffixes
+        let styleName = typeStr.replace(/^ai_/i, '');
+        styleName = styleName.replace(/_grid$/i, '').replace(/_gird$/i, '').replace(/_360$/i, '');
+        styleName = styleName.replace(/_/g, ' ').trim() || 'Luxury Variant';
+        // Capitalise first letter of each word
+        styleName = styleName.replace(/\b\w/g, c => c.toUpperCase());
 
         if (isGrid) {
-            if (!productsMap[prefix].variantGrids) productsMap[prefix].variantGrids = {};
-            productsMap[prefix].variantGrids[styleName] = file.webViewLink;
+          prod.variantGrids[styleName] = file.webViewLink;
         } else if (isVideo) {
-            if (!productsMap[prefix].variantVideos) productsMap[prefix].variantVideos = {};
-            productsMap[prefix].variantVideos[styleName] = file.webViewLink;
+          prod.variantVideos[styleName] = file.webViewLink;
         } else {
-            productsMap[prefix].variants.push({
-              url: file.webViewLink,
-              style: styleName || 'Luxury Variant'
-            });
+          prod.variants.push({ url: file.webViewLink, style: styleName });
         }
-      } else if (fileNameLower.includes('_grid') || fileNameLower.includes('_gird')) {
-        productsMap[prefix].globalGrid = file.webViewLink;
+
+      } else if (typeStr.includes('grid') || typeStr.includes('gird')) {
+        prod.globalGrid = file.webViewLink;
       }
     });
 
-    // 4. UPSERT TO GOOGLE SHEET (update existing rows OR append new ones)
-    const productsToSync = Object.values(productsMap).filter(p => p.skeleton && (p.variants.length > 0 || p.globalGrid));
+    // 4. Filter complete sets (need at least a skeleton + one render/grid)
+    const productsToSync = Object.values(productsMap).filter(
+      p => p.skeleton && (p.variants.length > 0 || p.globalGrid || Object.keys(p.variantGrids).length > 0)
+    );
 
     if (productsToSync.length === 0) {
       return response.status(200).json({ message: 'No complete sets found', processed: 0 });
     }
 
-    // Fetch full sheet to know both existing IDs AND their row numbers
+    // 5. Fetch full sheet to build ID→rowNumber map
+    //    Sheet columns:
+    //    A=SkeletonID  B=Category  C=ProductName  D=Skeleton  E=Renders
+    //    F=Styles      G=Desc      H=Price         I=Status    J=Grids  K=Videos
     const currentSheet = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.CATALOG_SHEET_ID,
-      range: 'Sheet1!A:J',
+      range: 'Sheet1!A:K',
     });
     const existingRows = currentSheet.data.values || [];
 
-    // Build a map of { productId -> sheetRowIndex (1-based, accounting for header) }
-    // Row 1 = header, Row 2 = first data row (index 0 in the array = header)
-    const idToRowNumber = {};
+    // Map: "Category|ProductName" → { rowNumber, existingId }
+    // We match on B+C (category+productName) so updates survive ID regeneration
+    const groupKeyToRow = {};
     existingRows.forEach((row, idx) => {
-      if (row[0]) idToRowNumber[row[0]] = idx + 1; // +1 because sheets are 1-based
+      if (row[0] && row[1] && row[2]) {
+        const key = `${row[1]}|${row[2]}`; // category|productName
+        groupKeyToRow[key] = { rowNumber: idx + 1, existingId: row[0] };
+      }
     });
 
-    const newRows    = []; // Products to append (brand new)
-    const updateData = []; // Products to update in-place
+    const updateData = [];
+    const newRows    = [];
 
     for (const prod of productsToSync) {
-      // Build the data columns we control (C, D, E, I, J)
-      // We deliberately skip B (name), F (description), G (price), H (status)
-      // so any manual edits you make in the sheet are preserved.
+      // Build per-variant arrays (grids + videos aligned to variants)
       const assignedGrids = prod.variants.map(v => {
-        const variantGrid = prod.variantGrids && prod.variantGrids[v.style];
-        return variantGrid || prod.globalGrid || '';
+        return prod.variantGrids[v.style] || prod.globalGrid || '';
       });
       const assignedVideos = prod.variants.map(v => {
-        return (prod.variantVideos && prod.variantVideos[v.style]) || '';
+        return prod.variantVideos[v.style] || '';
       });
 
       const finalGridString  = assignedGrids.length  > 0 ? assignedGrids.join(',')  : (prod.globalGrid || '');
       const finalVideoString = assignedVideos.length > 0 ? assignedVideos.join(',') : '';
 
-      const existingRowNum = idToRowNumber[prod.id];
+      const existingEntry = groupKeyToRow[prod.groupKey];
 
-      if (existingRowNum) {
-        // ── UPDATE: overwrite only the Drive-sourced columns ──────────────────
-        // Col A=id, C=skeleton, D=renders, E=styles, I=grids, J=videos
-        // Col B, F, G, H are left untouched (manual fields)
+      if (existingEntry) {
+        // ── UPDATE existing row in-place ───────────────────────────────────
+        const r = existingEntry.rowNumber;
+        const existingRowData = existingRows[r - 1];
+
         updateData.push({
-          range: `Sheet1!A${existingRowNum}:J${existingRowNum}`,
+          range: `Sheet1!A${r}:K${r}`,
           values: [[
-            prod.id,                                    // A: id
-            prod.name.replace(/-/g, ' '),               // B: name (refresh from filename)
-            prod.skeleton,                              // C: skeleton
-            prod.variants.map(v => v.url).join(','),    // D: renders
-            prod.variants.map(v => v.style).join(','),  // E: style names
-            existingRows[existingRowNum - 1][5] || `High-end ${prod.name} with custom artisan variations.`, // F: description (preserve if set)
-            existingRows[existingRowNum - 1][6] || 'Price TBD',  // G: price (preserve)
-            existingRows[existingRowNum - 1][7] || 'Live',       // H: status (preserve)
-            finalGridString,                            // I: grids
-            finalVideoString,                           // J: videos
+            existingEntry.existingId,                                                      // A: keep existing ID
+            prod.category,                                                                  // B: category
+            prod.productName,                                                               // C: product name
+            prod.skeleton,                                                                  // D: skeleton
+            prod.variants.map(v => v.url).join(','),                                       // E: renders
+            prod.variants.map(v => v.style).join(','),                                     // F: styles
+            existingRowData[6] || `High-end ${prod.productName} by Hayyat Furnishes.`,    // G: description (preserve)
+            existingRowData[7] || 'Price TBD',                                             // H: price (preserve)
+            existingRowData[8] || 'Live',                                                   // I: status (preserve)
+            finalGridString,                                                                // J: grids
+            finalVideoString,                                                               // K: videos
           ]],
         });
       } else {
-        // ── INSERT: brand-new product, append to sheet ────────────────────────
+        // ── INSERT new row ─────────────────────────────────────────────────
+        const newId = `${prod.category.replace(/\s+/g,'').substring(0,6)}${randomSuffix()}`;
+
         newRows.push([
-          prod.id,
-          prod.name.replace(/-/g, ' '),
+          newId,
+          prod.category,
+          prod.productName,
           prod.skeleton,
           prod.variants.map(v => v.url).join(','),
           prod.variants.map(v => v.style).join(','),
-          `High-end ${prod.name} with custom artisan variations.`,
+          `High-end ${prod.productName} by Hayyat Furnishes.`,
           'Price TBD',
           'Live',
           finalGridString,
@@ -156,14 +210,11 @@ export default async function handler(request, response) {
       }
     }
 
-    // Execute updates (batch all in one API call)
+    // Execute batch update
     if (updateData.length > 0) {
       await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId: process.env.CATALOG_SHEET_ID,
-        resource: {
-          valueInputOption: 'USER_ENTERED',
-          data: updateData,
-        },
+        resource: { valueInputOption: 'USER_ENTERED', data: updateData },
       });
     }
 
@@ -171,17 +222,17 @@ export default async function handler(request, response) {
     if (newRows.length > 0) {
       await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.CATALOG_SHEET_ID,
-        range: 'Sheet1!A:J',
+        range: 'Sheet1!A:K',
         valueInputOption: 'USER_ENTERED',
         resource: { values: newRows },
       });
     }
 
     return response.status(200).json({
-      message: 'Sync Complete',
-      updated:  updateData.length,
-      inserted: newRows.length,
-      processed: updateData.length + newRows.length,
+      message:         'Sync Complete',
+      updated:         updateData.length,
+      inserted:        newRows.length,
+      processed:       updateData.length + newRows.length,
       detected_groups: Object.keys(productsMap).length,
     });
 

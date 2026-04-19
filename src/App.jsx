@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Navbar from './components/Navbar';
 import Home from './components/Home';
+import Showroom from './components/Showroom';
 import ProductPage from './components/ProductPage';
 import OurStory from './components/OurStory';
 import Contact from './components/Contact';
@@ -9,7 +10,7 @@ import SpotlightBackground from './components/SpotlightBackground';
 import './App.css';
 
 function App() {
-  // view routing state: 'home' | 'product' | 'story' | 'contact'
+  // view routing: 'home' | 'showroom' | 'product' | 'story' | 'contact'
   const [view, setView] = useState('home');
   const [selectedProduct, setSelectedProduct] = useState(null);
 
@@ -18,24 +19,22 @@ function App() {
     setView('product');
   };
 
-  const handleSetView = (newView) => {
-    if (newView === 'showroom') {
-      setView('home'); // Map showroom back to home/grid
-    } else {
-      setView(newView);
-    }
-  };
-
   return (
     <div className="app-container">
       <SpotlightBackground />
-      <Navbar setView={handleSetView} />
-      
+      <Navbar setView={setView} currentView={view} />
+
       <main className="main-content">
         <AnimatePresence mode="wait">
+
           {view === 'home' && (
             <Home key="home" onSelectProduct={handleSelectProduct} />
           )}
+
+          {view === 'showroom' && (
+            <Showroom key="showroom" onSelectProduct={handleSelectProduct} />
+          )}
+
           {view === 'product' && selectedProduct && (
             <motion.div
               key="product"
@@ -47,12 +46,15 @@ function App() {
               <ProductPage product={selectedProduct} />
             </motion.div>
           )}
+
           {view === 'story' && (
             <OurStory key="story" />
           )}
+
           {view === 'contact' && (
             <Contact key="contact" />
           )}
+
         </AnimatePresence>
       </main>
     </div>

@@ -83,7 +83,7 @@ const TiltCard = ({ product, onClick }) => {
         </AnimatePresence>
       </div>
       <div className="tilt-card-content" style={{ transform: "translateZ(80px)" }}>
-        <h3 className="tilt-card-title">{product.name}</h3>
+        <h3 className="tilt-card-title">{product.productName || product.name}</h3>
         <p className="tilt-card-price">{product.price}</p>
         <span className="tilt-card-category">{product.category || 'Luxury Collection'}</span>
       </div>
