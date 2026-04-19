@@ -51,15 +51,17 @@ export default async function handler(request, response) {
       if (fileNameLower.includes('_skeleton')) {
         productsMap[prefix].skeleton = file.webViewLink;
       } else if (fileNameLower.includes('_ai')) {
-        // We handle two things for _ai files:
-        // 1. A render: "Walnut_Ai_Blue.jpg"
-        // 2. A variant-specific grid: "Walnut_Ai_Blue_grid.jpg"
+        // Robust check for grids (including common typos)
+        const isGrid = fileNameLower.includes('_grid') || fileNameLower.includes('_gird');
         
-        const isVariantGrid = fileNameLower.includes('_grid');
-        const styleName = parts.slice(2).join(' ').split('_grid')[0].split('.')[0].trim(); 
+        // Clean up the style name: 
+        // 1. Remove the prefix and '_Ai_'
+        // 2. Remove '_grid' or '_gird' or '.jpg' etc.
+        let styleName = file.name.split(/_ai_/i)[1] || '';
+        styleName = styleName.split(/\.(?=[^.]*$)/)[0]; // Remove extension
+        styleName = styleName.replace(/_grid/i, '').replace(/_gird/i, '').replace(/_/g, ' ').trim();
 
-        if (isVariantGrid) {
-            // Store variant grid temporarily to match later
+        if (isGrid) {
             if (!productsMap[prefix].variantGrids) productsMap[prefix].variantGrids = {};
             productsMap[prefix].variantGrids[styleName] = file.webViewLink;
         } else {
@@ -68,8 +70,7 @@ export default async function handler(request, response) {
               style: styleName || 'Luxury Variant'
             });
         }
-      } else if (fileNameLower.includes('_grid')) {
-        // This is a global grid: "Walnut_grid.jpg" (used for all variations if no specific one exists)
+      } else if (fileNameLower.includes('_grid') || fileNameLower.includes('_gird')) {
         productsMap[prefix].globalGrid = file.webViewLink;
       }
     });

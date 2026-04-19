@@ -24,6 +24,8 @@ const ProductPage = ({ product }) => {
 
   const rawImageProcessed = useMemo(() => getDirectImageUrl(product.rawImage), [product.rawImage]);
 
+  const [selectedStyleIndex, setSelectedStyleIndex] = useState(0);
+
   // Styles labels mapping dynamically from the DB or falling back to defaults
   const styleLabels = product.styleNames || ['Walnut / Cream', 'Oak / Forest Green', 'Black / Tan'];
 
