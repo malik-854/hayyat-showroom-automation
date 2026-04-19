@@ -5,7 +5,16 @@ const TiltCard = ({ product, onClick }) => {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const images = product.finishedImage ? product.finishedImage.split(',').map(u => u.trim()) : [];
+  const getDirectImageUrl = (url) => {
+    if (!url) return '';
+    if (url.includes('drive.google.com')) {
+      const idMatch = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
+      return idMatch ? `https://drive.google.com/uc?export=view&id=${idMatch[1]}` : url;
+    }
+    return url;
+  };
+
+  const images = product.finishedImage ? product.finishedImage.split(',').map(u => getDirectImageUrl(u.trim())) : [];
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {

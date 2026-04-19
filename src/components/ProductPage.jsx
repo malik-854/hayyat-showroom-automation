@@ -5,10 +5,22 @@ import './ProductPage.css';
 const ProductPage = ({ product }) => {
   const [showCraftsmanshipMode, setShowCraftsmanshipMode] = useState(false);
   
+  const getDirectImageUrl = (url) => {
+    if (!url) return '';
+    if (typeof url !== 'string') return url;
+    if (url.includes('drive.google.com')) {
+      const idMatch = url.match(/\/d\/([^/]+)/) || url.match(/id=([^&]+)/);
+      return idMatch ? `https://drive.google.com/uc?export=view&id=${idMatch[1]}` : url;
+    }
+    return url;
+  };
+
   // Parse comma-separated images from the sheet
   const images = useMemo(() => {
-    return product.finishedImage.split(',');
+    return product.finishedImage.split(',').map(u => getDirectImageUrl(u.trim()));
   }, [product.finishedImage]);
+
+  const rawImageProcessed = useMemo(() => getDirectImageUrl(product.rawImage), [product.rawImage]);
 
   const [selectedStyleIndex, setSelectedStyleIndex] = useState(0);
 
@@ -33,7 +45,7 @@ const ProductPage = ({ product }) => {
     y.set(yPct);
   };
 
-  const currentImage = showCraftsmanshipMode ? product.rawImage : images[selectedStyleIndex];
+  const currentImage = showCraftsmanshipMode ? rawImageProcessed : images[selectedStyleIndex];
 
   return (
     <div className="product-page-container">
