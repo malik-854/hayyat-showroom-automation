@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Navbar from './components/Navbar';
+import MobileNav from './components/MobileNav';
 import Home from './components/Home';
 import Showroom from './components/Showroom';
 import ProductPage from './components/ProductPage';
@@ -22,7 +23,10 @@ function App() {
   return (
     <div className="app-container">
       <SpotlightBackground />
+      {/* Desktop navbar — hidden on mobile via CSS */}
       <Navbar setView={setView} currentView={view} />
+      {/* Mobile bottom nav — shown only on mobile via CSS */}
+      <MobileNav setView={setView} currentView={view} />
 
       <main className="main-content">
         <AnimatePresence mode="wait">

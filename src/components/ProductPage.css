@@ -355,3 +355,140 @@
 .materials-list { list-style: none; color: #888; font-size: 0.95rem; line-height: 2.1; }
 .materials-list li { position: relative; padding-left: 1.4rem; }
 .materials-list li::before { content: '—'; position: absolute; left: 0; color: #444; font-size: 0.7rem; top: 0.35rem; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOBILE STICKY CTA BAR (desktop: hidden)
+   ═══════════════════════════════════════════════════════════════════════ */
+.mobile-sticky-cta {
+  display: none; /* shown only on mobile via media query */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — ≤768px
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Page shell */
+  .product-page-container {
+    padding: 5.5rem 1rem 10rem; /* bottom room for sticky CTA + bottom nav */
+  }
+
+  /* Single-column layout on mobile */
+  .product-grid-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  /* Media no longer sticky on mobile */
+  .product-media-section {
+    position: static;
+  }
+
+  /* Slightly shorter image frame on phones */
+  .md-main-frame {
+    aspect-ratio: 3 / 4;
+    border-radius: 18px;
+  }
+
+  /* Segment bar — smaller text */
+  .segment-btn {
+    font-size: 0.7rem;
+    padding: 0.5rem 0.35rem;
+    gap: 0.3rem;
+  }
+  .seg-icon { font-size: 0.85rem; }
+
+  /* Product title */
+  .product-title-large {
+    font-size: clamp(1.8rem, 7vw, 2.6rem);
+  }
+
+  /* Bigger, easier-to-tap style chips */
+  .style-chip {
+    padding: 0.75rem 1.1rem;
+    font-size: 0.95rem;
+    border-radius: 14px;
+    min-height: 48px; /* WCAG tap target */
+  }
+
+  .color-dot {
+    width: 13px;
+    height: 13px;
+  }
+
+  /* Hide the desktop "Order Variant" button — replaced by sticky CTA */
+  .product-actions {
+    display: none;
+  }
+
+  /* Sticky mobile CTA */
+  .mobile-sticky-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    position: fixed;
+    bottom: calc(68px + env(safe-area-inset-bottom)); /* above mobile nav */
+    left: 0;
+    right: 0;
+    padding: 0.85rem 1.25rem;
+    background: rgba(15, 15, 18, 0.88);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    z-index: 900;
+  }
+
+  .mobile-cta-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .mobile-cta-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-cta-price {
+    font-size: 0.78rem;
+    color: var(--gold, #d4af37);
+    font-weight: 500;
+  }
+
+  .mobile-cta-btn {
+    flex-shrink: 0;
+    background: white;
+    color: #1d1d1f;
+    border-radius: 980px;
+    padding: 0.75rem 1.4rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+    min-height: 48px;
+  }
+  .mobile-cta-btn:active { transform: scale(0.96); background: #e8e8e8; }
+
+  /* Angle strip — bigger tap targets */
+  .md-angle-thumb {
+    min-height: 60px;
+    padding: 0.5rem 0.25rem 0.55rem;
+  }
+  .md-angle-thumb span { font-size: 0.55rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   EXTRA SMALL — ≤390px (iPhone SE / small Android)
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 390px) {
+  .product-page-container { padding: 5rem 0.75rem 9.5rem; }
+  .segment-btn { font-size: 0.65rem; padding: 0.45rem 0.25rem; }
+  .product-title-large { font-size: 1.7rem; }
+}
+

@@ -129,8 +129,43 @@
   to { transform: rotate(360deg); }
 }
 
-@media (max-width: 600px) {
-  .showroom-title { font-size: 2.5rem; }
-  .showroom-grid  { grid-template-columns: 1fr; gap: 1.5rem; }
-  .category-filter-bar { gap: 0.4rem; }
+@media (max-width: 768px) {
+  .showroom-page {
+    padding: 5rem 1rem calc(80px + env(safe-area-inset-bottom));
+  }
+  .showroom-title { font-size: clamp(2.2rem, 8vw, 3.2rem); }
+  .showroom-subtitle { font-size: 0.95rem; }
+  .showroom-header { margin-bottom: 2rem; }
+
+  /* Filter bar: horizontal single line, scrollable */
+  .category-filter-bar {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  .category-filter-bar::-webkit-scrollbar { display: none; }
+
+  /* Filter buttons: bigger tap targets */
+  .category-filter-btn {
+    flex-shrink: 0;
+    min-height: 44px;
+    font-size: 0.82rem;
+    padding: 0.6rem 1.1rem;
+  }
+
+  /* 2-column grid on tablet-sized phones */
+  .showroom-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
 }
+
+@media (max-width: 500px) {
+  /* Single column on small phones */
+  .showroom-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+}
+

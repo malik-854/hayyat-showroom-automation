@@ -315,7 +315,22 @@ const ProductPage = ({ product }) => {
           </div>
         </div>
 
+      </div>{/* end product-grid-layout */}
+
+      {/* ── Mobile Sticky CTA (hidden on desktop via CSS) ── */}
+      <div className="mobile-sticky-cta">
+        <div className="mobile-cta-info">
+          <span className="mobile-cta-name">{product.name}</span>
+          <span className="mobile-cta-price">{product.price}</span>
+        </div>
+        <button
+          className="mobile-cta-btn"
+          onClick={() => window.open('https://wa.me/923001234567', '_blank')}
+        >
+          Order Now
+        </button>
       </div>
+
     </div>
   );
 };

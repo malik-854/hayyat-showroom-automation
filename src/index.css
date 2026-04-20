@@ -41,6 +41,11 @@ button {
   outline: none;
   background: none;
   font-family: inherit;
+  touch-action: manipulation; /* prevents 300ms delay & double-tap zoom on mobile */
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 .container {

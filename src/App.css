@@ -436,3 +436,180 @@
   .featured-sections-wrapper { padding: 4rem 1.25rem 6rem; gap: 5rem; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   MOBILE BOTTOM NAV
+   ═══════════════════════════════════════════════════════════════════════ */
+.mobile-bottom-nav {
+  display: none; /* desktop: hidden */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SWIPE SLIDER  (mobile featured rows)
+   ═══════════════════════════════════════════════════════════════════════ */
+.swipe-slider {
+  display: none; /* shown on mobile only */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GLOBAL MOBILE OVERRIDES — ≤768px
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Hide desktop navbar */
+  .glass-navbar { display: none !important; }
+
+  /* Show mobile bottom nav */
+  .mobile-bottom-nav {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(64px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(10, 10, 14, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    z-index: 1000;
+  }
+
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 0.5rem 0.25rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #555;
+    position: relative;
+    transition: color 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 48px;
+  }
+
+  .mobile-nav-item.active { color: var(--gold, #d4af37); }
+
+  .mobile-nav-icon {
+    font-size: 1.35rem;
+    line-height: 1;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .mobile-nav-item.active .mobile-nav-icon { transform: scale(1.15); }
+
+  .mobile-nav-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .mobile-nav-active-dot {
+    position: absolute;
+    top: 6px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--gold, #d4af37);
+  }
+
+  /* Give main content bottom padding so it's above the nav */
+  .main-content {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+
+  /* Hero: tighter text */
+  .hero-title-reveal {
+    font-size: clamp(2rem, 8vw, 3rem);
+    margin-bottom: 1.2rem;
+  }
+  .hero-subtitle {
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+  }
+
+  /* Hero: reduce height on mobile so it doesn't dominate */
+  .luxury-hero { height: 90vh; }
+
+  /* Featured sections wrapper */
+  .featured-sections-wrapper {
+    padding: 3.5rem 1rem 5rem;
+    gap: 4rem;
+  }
+
+  /* Section header on mobile */
+  .featured-section .section-header {
+    gap: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+  .section-title { font-size: 1.15rem; }
+  .section-badge { font-size: 0.6rem; padding: 0.2rem 0.55rem; }
+
+  /* Desktop 3-col grid: hidden on mobile */
+  .featured-grid { display: none; }
+
+  /* Swipe slider: visible on mobile */
+  .swipe-slider {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.5rem 0 1rem;
+    cursor: grab;
+    /* Hide scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .swipe-slider::-webkit-scrollbar { display: none; }
+
+  .swipe-slide {
+    flex: 0 0 78vw;
+    max-width: 300px;
+    scroll-snap-align: start;
+  }
+  /* First and last slides get padding so the edges peek nicely */
+  .swipe-slide:first-child { margin-left: 0.5rem; }
+  .swipe-slide:last-child  { margin-right: 1rem; }
+
+  /* Tilt card within swipe slides: disable 3D tilt on touch devices */
+  .swipe-slide .tilt-card {
+    transform: none !important;
+    will-change: auto;
+  }
+
+  /* Tilt card image: slightly taller for portrait phone feel */
+  .tilt-card-image { aspect-ratio: 2/3; }
+
+  /* Story page: single column */
+  .story-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .story-title { font-size: clamp(1.8rem, 8vw, 2.8rem); }
+  .story-image-placeholder { height: 220px; }
+
+  /* Contact page */
+  .contact-title { font-size: clamp(1.8rem, 7vw, 2.4rem); }
+  .contact-grid  { grid-template-columns: 1fr; gap: 1rem; }
+  .contact-card  { padding: 1.75rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   EXTRA SMALL — ≤390px
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 390px) {
+  .swipe-slide { flex: 0 0 86vw; }
+  .hero-title-reveal { font-size: clamp(1.7rem, 8.5vw, 2rem); }
+  .luxury-hero { height: 85vh; }
+}
+
+

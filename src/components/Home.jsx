@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { fetchProducts } from '../services/db';
 import TiltCard from './TiltCard';
@@ -7,9 +7,60 @@ import TiltCard from './TiltCard';
 const heroText = "Handcrafted Skeletons. AI-Perfected Finishes. Luxury Reimagined.";
 const words = heroText.split(" ");
 
-// Reusable featured row component
+// ─── Touch-aware Swipe Slider for mobile featured rows ───────────────────────
+const SwipeSlider = ({ children }) => {
+  const trackRef = useRef(null);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+  const isDragging = useRef(false);
+
+  const onTouchStart = (e) => {
+    startX.current = e.touches[0].pageX;
+    scrollLeft.current = trackRef.current.scrollLeft;
+  };
+  const onTouchMove = (e) => {
+    const dx = startX.current - e.touches[0].pageX;
+    trackRef.current.scrollLeft = scrollLeft.current + dx;
+  };
+
+  const onMouseDown = (e) => {
+    isDragging.current = true;
+    startX.current = e.pageX - trackRef.current.offsetLeft;
+    scrollLeft.current = trackRef.current.scrollLeft;
+    trackRef.current.style.cursor = 'grabbing';
+  };
+  const onMouseMove = (e) => {
+    if (!isDragging.current) return;
+    const x = e.pageX - trackRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.2;
+    trackRef.current.scrollLeft = scrollLeft.current - walk;
+  };
+  const stopDrag = () => {
+    isDragging.current = false;
+    if (trackRef.current) trackRef.current.style.cursor = 'grab';
+  };
+
+  return (
+    <div
+      ref={trackRef}
+      className="swipe-slider"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={stopDrag}
+      onMouseLeave={stopDrag}
+    >
+      {children}
+    </div>
+  );
+};
+
+// ─── Reusable featured row ────────────────────────────────────────────────────
 const FeaturedRow = ({ title, badge, products, onSelectProduct }) => {
   if (!products || products.length === 0) return null;
+
+  const capped = products.slice(0, 3);
 
   return (
     <section className="featured-section">
@@ -18,8 +69,10 @@ const FeaturedRow = ({ title, badge, products, onSelectProduct }) => {
         <span className="section-badge">{badge}</span>
         <div className="section-line" />
       </div>
+
+      {/* Desktop: normal 3-column grid */}
       <div className="featured-grid">
-        {products.slice(0, 3).map((p) => (
+        {capped.map((p) => (
           <TiltCard
             key={p.id}
             product={p}
@@ -27,10 +80,23 @@ const FeaturedRow = ({ title, badge, products, onSelectProduct }) => {
           />
         ))}
       </div>
+
+      {/* Mobile: horizontal swipe slider */}
+      <SwipeSlider>
+        {capped.map((p) => (
+          <div key={p.id} className="swipe-slide">
+            <TiltCard
+              product={p}
+              onClick={() => onSelectProduct(p)}
+            />
+          </div>
+        ))}
+      </SwipeSlider>
     </section>
   );
 };
 
+// ─── Home Page ────────────────────────────────────────────────────────────────
 const Home = ({ onSelectProduct }) => {
   const [products, setProducts] = useState([]);
   const { scrollY } = useScroll();
@@ -49,9 +115,9 @@ const Home = ({ onSelectProduct }) => {
   }, []);
 
   // Filter products by tag (case-insensitive)
-  const newArrivals  = products.filter(p => p.tag?.toLowerCase() === 'new');
-  const bestSelling  = products.filter(p => p.tag?.toLowerCase() === 'best');
-  const onSale       = products.filter(p => p.tag?.toLowerCase() === 'sale');
+  const newArrivals = products.filter(p => p.tag?.toLowerCase() === 'new');
+  const bestSelling = products.filter(p => p.tag?.toLowerCase() === 'best');
+  const onSale      = products.filter(p => p.tag?.toLowerCase() === 'sale');
 
   // Animation variants for word reveal
   const container = {
