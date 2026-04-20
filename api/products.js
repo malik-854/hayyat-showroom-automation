@@ -16,10 +16,10 @@ export default async function handler(request, response) {
     // 2. Fetch the catalog
     // Col: A=SkeletonID  B=Category  C=ProductName  D=Skeleton
     //      E=Renders     F=Styles    G=Desc          H=Price
-    //      I=Status      J=Grids     K=Videos
+    //      I=Status      J=Grids     K=Videos        L=Tag
     const sheetRes = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.CATALOG_SHEET_ID,
-      range: 'Sheet1!A2:K200',
+      range: 'Sheet1!A2:L200',
     });
 
     const rows = sheetRes.data.values;
@@ -49,6 +49,7 @@ export default async function handler(request, response) {
         status:       row[8]  || '',   // I
         angleViews:   gridLink ? gridLink.split(',').map(s => s.trim()).filter(Boolean) : [],  // J
         videos:       row[10] ? row[10].split(',').map(s => s.trim()) : [],  // K
+        tag:          row[11] ? row[11].trim() : '',  // L: e.g. "New", "Best", "Sale"
       };
     });
 

@@ -379,3 +379,60 @@
 .contact-footer {
   margin-top: 2rem;
 }
+
+/* ── Featured Sections (Home) ─────────────────────────────────────────── */
+.featured-sections-wrapper {
+  padding: 6rem 2rem 8rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 7rem;
+}
+
+.featured-section {
+  width: 100%;
+}
+
+/* Override section-header to accommodate the badge */
+.featured-section .section-header {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 3rem;
+}
+
+.section-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bg-dark);
+  background: var(--gold);
+  padding: 0.25rem 0.7rem;
+  border-radius: 30px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Badge colour overrides per section */
+.featured-section:nth-child(1) .section-badge { background: #4ade80; color: #0a1f0a; } /* New — green */
+.featured-section:nth-child(2) .section-badge { background: var(--gold); color: #1a1100; } /* Best — gold */
+.featured-section:nth-child(3) .section-badge { background: #f87171; color: #1f0a0a; } /* Sale — red */
+
+/* 3-column grid — always exactly 3 cards */
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.5rem;
+}
+
+@media (max-width: 1024px) {
+  .featured-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .featured-grid { grid-template-columns: 1fr; }
+  .featured-sections-wrapper { padding: 4rem 1.25rem 6rem; gap: 5rem; }
+}
+

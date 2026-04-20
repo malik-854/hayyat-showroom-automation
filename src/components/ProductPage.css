@@ -315,11 +315,8 @@
 .style-chip:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
 .style-chip.active { background: white; color: #1d1d1f; border-color: white; }
 
-.color-dot { width: 11px; height: 11px; border-radius: 50%; }
-.style-0 { background: #5d4037; }
-.style-1 { background: #2e7d32; }
-.style-2 { background: #212121; }
-.style-chip.active .color-dot { outline: 2px solid rgba(0,0,0,0.12); outline-offset: 2px; }
+.color-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.style-chip.active .color-dot { outline: 2px solid rgba(0,0,0,0.18); outline-offset: 2px; }
 
 /* Description */
 .product-description-container { margin-bottom: 2.5rem; }

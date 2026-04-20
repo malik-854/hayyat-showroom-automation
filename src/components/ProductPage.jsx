@@ -2,6 +2,30 @@ import React, { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './ProductPage.css';
 
+// Derive a display color from a variation label name.
+// Priority: exact CSS color name match → known keyword map → hash-based HSL fallback.
+const COLOR_KEYWORDS = {
+  walnut: '#7B4F2E', brown: '#8B5E3C', oak: '#C8A96E', white: '#F0EDE8',
+  black: '#2A2A2A', grey: '#8C8C8C', gray: '#8C8C8C', beige: '#C9B99A',
+  cream: '#E8DEC8', gold: '#D4AF37', bronze: '#8C6240', ebony: '#3B2A1A',
+  teak: '#A0522D', mahogany: '#4A1C0C', pine: '#D4A056', ivory: '#E8E0CC',
+  blue: '#3B6EA5', navy: '#1B2F57', green: '#3A6B3A', sage: '#7A9B6A',
+  olive: '#6B703A', red: '#8B2020', rose: '#B56B6B', blush: '#C49090',
+  charcoal: '#3A3A3A', sand: '#C2A87A', linen: '#E0D4BE', slate: '#527080',
+};
+
+const getDotColor = (label) => {
+  const lower = label.toLowerCase();
+  for (const [kw, hex] of Object.entries(COLOR_KEYWORDS)) {
+    if (lower.includes(kw)) return hex;
+  }
+  // Hash-based HSL fallback — deterministic per label
+  let hash = 0;
+  for (let i = 0; i < label.length; i++) hash = label.charCodeAt(i) + ((hash << 5) - hash);
+  const h = Math.abs(hash) % 360;
+  return `hsl(${h}, 40%, 45%)`;
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 // UTILITY
 // ─────────────────────────────────────────────────────────────────────────────
@@ -258,7 +282,10 @@ const ProductPage = ({ product }) => {
                   className={`style-chip ${selectedStyle === index ? 'active' : ''}`}
                   onClick={() => setSelectedStyle(index)}
                 >
-                  <div className={`color-dot style-${index}`} />
+                  <div
+                    className="color-dot"
+                    style={{ background: getDotColor(label) }}
+                  />
                   {label}
                 </button>
               ))}
