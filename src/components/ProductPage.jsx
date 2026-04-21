@@ -126,8 +126,30 @@ const MediaDisplay = ({ segment, studioUrl, rawImageUrl, angleGridUrl, videoUrl 
     // Angles: CSS-cropped grid — zoom into selected quadrant
     if (segment === 'angles') {
       const showCrop = activeAngle !== null && angleGridUrl;
+      
+      // NEW: Interactive Hover-Rotate Logic
+      const handleMouseMove = (e) => {
+        if (!angleGridUrl) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        
+        // Map X position (0 to 1) to quadrant sequence for rotation:
+        // [Front, Right, Back, Left] -> 0, 1, 2, 3
+        const quadIndex = Math.min(3, Math.floor(x * 4));
+        setActiveAngle(quadIndex);
+      };
+
+      const handleMouseLeave = () => {
+        // Optional: keep last angle or reset to front
+        // setActiveAngle(0); 
+      };
+
       return (
-        <div className={`md-angles-frame ${showCrop ? `active-q${activeAngle}` : ''}`}>
+        <div 
+          className={`md-angles-frame ${showCrop ? `active-q${activeAngle}` : 'active-q0'}`}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
           {angleGridUrl ? (
             <img
               src={getDriveUrl(angleGridUrl)}
@@ -140,6 +162,7 @@ const MediaDisplay = ({ segment, studioUrl, rawImageUrl, angleGridUrl, videoUrl 
               <p>No angle images for this variant yet</p>
             </div>
           )}
+          <div className="md-interaction-hint">← Drag to Rotate →</div>
         </div>
       );
     }

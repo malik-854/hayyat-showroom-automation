@@ -176,6 +176,30 @@
 .md-angles-frame.active-q2 .md-grid-img { width: 200%; height: 200%; top: -100%;left: 0;    }
 .md-angles-frame.active-q3 .md-grid-img { width: 200%; height: 200%; top: -100%;left: -100%;}
 
+.md-interaction-hint {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  padding: 0.4rem 1rem;
+  border-radius: 30px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.6);
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.md-angles-frame:hover .md-interaction-hint {
+  opacity: 1;
+}
+
 /* ─── Angle Thumbnail Strip ──────────────────────────────────────────── */
 .md-angle-strip {
   display: flex;
